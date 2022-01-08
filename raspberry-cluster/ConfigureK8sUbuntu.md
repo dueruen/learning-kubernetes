@@ -73,3 +73,22 @@ kubectl get pods -o wide
 
 kubectl delete pod nginx-example
 kubectl delete service nginx-example
+
+# Configure ssh
+https://www.digitalocean.com/community/tutorials/how-to-configure-ssh-key-based-authentication-on-a-linux-server
+
+sudo vi /etc/hosts
+## Add ip and names
+k8s-master-01 ip
+k8s-worker-01 ip
+
+## copy public key
+cat ~/.ssh/id_rsa.pub | ssh newUser@k8s-worker-01 "mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys"
+
+## Add to windows terminal
+{
+    "commandline": "ssh newUser@k8s-worker-01",
+    "guid": "{07b52e3e-de2c-5db4-bd2d-ba144ed6c800}",
+    "hidden": false,
+    "name": "k8s-worker-01"
+}
