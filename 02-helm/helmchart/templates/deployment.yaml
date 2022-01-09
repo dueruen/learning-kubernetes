@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.name }}-deployment
+  labels:
+    app: {{ .Values.name }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.name }}
+    template:
+      matadata:
+        labels:
+          app: {{ .Values.name }}
+      spec:
+        containers:
+        - name: {{ .Values.name }}
+          image: "dueruen/learning-kubernetes:{{ .Values.image.tag }}"
+          env:
+            - name: NAME
+              value: {{ required "You must set a valid Name" .Values.name | quote }}
+            - name: HTTP_PORT
+              value: {{ .Values.http_port }}
+            - name: GET_PORT
+              value: {{ .Values.environment.GET_PORT }}
+            - name: POST_PORT
+              value: {{ .Values.environment.POST_PORT }}
+            - name: POST_SLEEP
+              value: {{ .Values.environment.POST_SLEEP }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.http_port }}

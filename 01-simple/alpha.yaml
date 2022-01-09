@@ -10,7 +10,7 @@ spec:
       image: dueruen/learning-kubernetes:simple
       ports:
         - containerPort: 8080
-          name: "simple-alpha-http"
+          name: "alpha-http"
 ---
 apiVersion: v1
 kind: Service
@@ -22,6 +22,6 @@ spec:
     - name: http
       port: 8080
       nodePort: 30080
-      targetPort: simple-alpha-http
+      targetPort: alpha-http
   selector:
     app: simple-alpha

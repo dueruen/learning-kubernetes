@@ -1,55 +1,146 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
+	"strconv"
+	"time"
 )
 
-var (
-	Trace *log.Logger
-	Info  *log.Logger
-)
-
-type alpha struct {
-	Name string `json:"name"`
-	Id   int    `json:"number"`
+type Service struct {
+	ServiceName      string `json:"name"`
+	HttpPort         string `json:"httpport"`
+	ExternalGetPort  string `json:"getport"`
+	ExternalPostPort string `json:"postport"`
+	PostSleep        int    `json:"postSleep"`
 }
 
-var alphaOne *alpha = &alpha{
-	Name: "Alpha",
-	Id:   42,
+var serviceData *Service = &Service{
+	ServiceName: "DefaultName",
+	HttpPort:    "8080",
+	PostSleep:   1,
 }
 
-func apiHandler(w http.ResponseWriter, r *http.Request) {
+func apiHandlerInternal(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case "GET":
-		log.Println("From api: Get alpha")
-		j, _ := json.Marshal(alphaOne)
+		log.Println(serviceData.ServiceName, " Internal: ", r.Method)
+		j, _ := json.Marshal(serviceData)
 		w.Write(j)
 
 	case "POST":
-		log.Println("From api: Post alpha")
-		d := json.NewDecoder(r.Body)
-		p := &alpha{}
-		err := d.Decode(p)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-		alphaOne = p
+		log.Println(serviceData.ServiceName, " Internal: ", r.Method)
+		time.Sleep(time.Duration(serviceData.PostSleep) * time.Second)
 
 	default:
-		log.Println("From api: endpoint not found")
+		log.Println(serviceData.ServiceName, " Internal: ", r.Method, "  was not found")
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		fmt.Fprintf(w, "I can't do that.")
+	}
+}
+
+func apiHandlerExternal(w http.ResponseWriter, r *http.Request) {
+
+	switch r.Method {
+	case "GET":
+		log.Println(serviceData.ServiceName, " External: ", r.Method)
+		var uri = ""
+		if serviceData.ExternalGetPort == "" {
+			uri = "http://localhost:" + serviceData.HttpPort + "/api"
+		} else {
+			uri = "http://localhost:" + serviceData.ExternalGetPort + "/api/external"
+		}
+
+		resp, err := http.Get(uri)
+		if err != nil {
+			log.Fatalln(err)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Fatalln(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		w.Write(body)
+
+	case "POST":
+		log.Println(serviceData.ServiceName, " External: ", r.Method)
+		var uri = ""
+		if serviceData.ExternalPostPort == "" {
+			uri = "http://localhost:" + serviceData.HttpPort + "/api"
+		} else {
+			uri = "http://localhost:" + serviceData.ExternalPostPort + "/api/external"
+		}
+
+		postBody, _ := json.Marshal(map[string]string{
+			"name":  "test",
+			"email": "test@example.com",
+		})
+		responseBody := bytes.NewBuffer(postBody)
+
+		resp, err := http.Post(uri, "application/json", responseBody)
+		if err != nil {
+			log.Fatalln(err)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Fatalln(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		w.Write(body)
+
+	default:
+		log.Println(serviceData.ServiceName, " External: ", r.Method, "  was not found")
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		fmt.Fprintf(w, "I can't do that.")
 	}
 }
 
 func main() {
-	log.Println("Alpha api running")
-	http.HandleFunc("/api", apiHandler)
-	http.HandleFunc("/api/test", apiHandler)
-	http.ListenAndServe(":8080", nil)
+	var serviceName = os.Getenv("NAME")
+	var httpPort = os.Getenv("HTTP_PORT")
+	var externalGetPort = os.Getenv("GET_PORT")
+	var externalPostPort = os.Getenv("POST_PORT")
+	var postSleep = os.Getenv("POST_SLEEP")
+
+	if serviceName != "" {
+		serviceData.ServiceName = serviceName
+	}
+	if httpPort != "" {
+		serviceData.HttpPort = httpPort
+	}
+
+	log.Println("Service ", serviceData.ServiceName, " is starting...")
+
+	serviceData.ExternalGetPort = externalGetPort
+	serviceData.ExternalPostPort = externalPostPort
+	if postSleep != "" {
+		sleepNumber, err := strconv.Atoi(postSleep)
+		if err != nil {
+			log.Fatalln(err)
+			return
+		}
+		serviceData.PostSleep = sleepNumber
+	}
+
+	log.Println("Alpha api running listering at localhost:", serviceData.HttpPort)
+
+	http.HandleFunc("/api", apiHandlerInternal)
+	http.HandleFunc("/api/external", apiHandlerExternal)
+	http.ListenAndServe(":"+serviceData.HttpPort, nil)
 }
