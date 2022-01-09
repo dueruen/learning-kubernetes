@@ -6,6 +6,7 @@ node_port: 30080
 
 image:
   tag: "helm-arm"
+  pullPolicy: "always"
 
 service:
   type: NodePort

@@ -130,7 +130,11 @@ func main() {
 	log.Println("Service ", serviceData.ServiceName, " is starting...")
 
 	serviceData.ExternalGetURI = externalGetURI
+	log.Println("ExternalGetURI: ", serviceData.ExternalGetURI)
+
 	serviceData.ExternalPostURI = externalPostURI
+	log.Println("ExternalPostURI: ", serviceData.ExternalPostURI)
+
 	if postSleep != "" {
 		sleepNumber, err := strconv.Atoi(postSleep)
 		if err != nil {

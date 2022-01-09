@@ -17,6 +17,7 @@ spec:
       containers:
       - name: {{ .Values.name }}
         image: "dueruen/learning-kubernetes:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
         env:
           - name: NAME
             value: {{ required "You must set a valid Name" .Values.name | quote }}
