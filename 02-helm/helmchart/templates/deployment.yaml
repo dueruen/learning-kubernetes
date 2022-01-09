@@ -10,7 +10,7 @@ spec:
     matchLabels:
       app: {{ .Values.name }}
   template:
-    matadata:
+    metadata:
       labels:
         app: {{ .Values.name }}
     spec:
@@ -21,13 +21,13 @@ spec:
           - name: NAME
             value: {{ required "You must set a valid Name" .Values.name | quote }}
           - name: HTTP_PORT
-            value: {{ .Values.http_port }}
-          - name: GET_PORT
-            value: {{ .Values.environment.GET_PORT }}
-          - name: POST_PORT
-            value: {{ .Values.environment.POST_PORT }}
+            value: "{{ .Values.http_port }}"
+          - name: GET_URI
+            value: "{{ .Values.environment.GET_URI }}"
+          - name: POST_URI
+            value: "{{ .Values.environment.POST_URI }}"
           - name: POST_SLEEP
-            value: {{ .Values.environment.POST_SLEEP }}
+            value: "{{ .Values.environment.POST_SLEEP }}"
         ports:
           - name: http
             containerPort: {{ .Values.http_port }}

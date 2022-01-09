@@ -2,11 +2,12 @@ replicaCount: 1
 
 name: alpha
 http_port: 8080
+node_port: 30080
 
 image:
   tag: "helm-arm"
 
 service:
-  type: ClusterIP
+  type: NodePort
 
 environment: {}

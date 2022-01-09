@@ -13,11 +13,11 @@ import (
 )
 
 type Service struct {
-	ServiceName      string `json:"name"`
-	HttpPort         string `json:"httpport"`
-	ExternalGetPort  string `json:"getport"`
-	ExternalPostPort string `json:"postport"`
-	PostSleep        int    `json:"postSleep"`
+	ServiceName     string `json:"name"`
+	HttpPort        string `json:"httpport"`
+	ExternalGetURI  string `json:"externalGetURI"`
+	ExternalPostURI string `json:"externalPostURI"`
+	PostSleep       int    `json:"postSleep"`
 }
 
 var serviceData *Service = &Service{
@@ -50,23 +50,24 @@ func apiHandlerExternal(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
 		log.Println(serviceData.ServiceName, " External: ", r.Method)
-		var uri = ""
-		if serviceData.ExternalGetPort == "" {
-			uri = "http://localhost:" + serviceData.HttpPort + "/api"
-		} else {
-			uri = "http://localhost:" + serviceData.ExternalGetPort + "/api/external"
+		if serviceData.ExternalGetURI == "" {
+			log.Println("No externalURI found")
+			apiHandlerInternal(w, r)
+			return
 		}
+
+		uri := serviceData.ExternalGetURI + "/api/external"
 
 		resp, err := http.Get(uri)
 		if err != nil {
-			log.Fatalln(err)
+			log.Println(err)
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			log.Fatalln(err)
+			log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -75,12 +76,13 @@ func apiHandlerExternal(w http.ResponseWriter, r *http.Request) {
 
 	case "POST":
 		log.Println(serviceData.ServiceName, " External: ", r.Method)
-		var uri = ""
-		if serviceData.ExternalPostPort == "" {
-			uri = "http://localhost:" + serviceData.HttpPort + "/api"
-		} else {
-			uri = "http://localhost:" + serviceData.ExternalPostPort + "/api/external"
+		if serviceData.ExternalPostURI == "" {
+			log.Println("No externalURI found")
+			apiHandlerInternal(w, r)
+			return
 		}
+
+		uri := serviceData.ExternalPostURI + "/api/external"
 
 		postBody, _ := json.Marshal(map[string]string{
 			"name":  "test",
@@ -90,14 +92,14 @@ func apiHandlerExternal(w http.ResponseWriter, r *http.Request) {
 
 		resp, err := http.Post(uri, "application/json", responseBody)
 		if err != nil {
-			log.Fatalln(err)
+			log.Println(err)
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			log.Fatalln(err)
+			log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -114,8 +116,8 @@ func apiHandlerExternal(w http.ResponseWriter, r *http.Request) {
 func main() {
 	var serviceName = os.Getenv("NAME")
 	var httpPort = os.Getenv("HTTP_PORT")
-	var externalGetPort = os.Getenv("GET_PORT")
-	var externalPostPort = os.Getenv("POST_PORT")
+	var externalGetURI = os.Getenv("GET_URI")
+	var externalPostURI = os.Getenv("POST_URI")
 	var postSleep = os.Getenv("POST_SLEEP")
 
 	if serviceName != "" {
@@ -127,12 +129,12 @@ func main() {
 
 	log.Println("Service ", serviceData.ServiceName, " is starting...")
 
-	serviceData.ExternalGetPort = externalGetPort
-	serviceData.ExternalPostPort = externalPostPort
+	serviceData.ExternalGetURI = externalGetURI
+	serviceData.ExternalPostURI = externalPostURI
 	if postSleep != "" {
 		sleepNumber, err := strconv.Atoi(postSleep)
 		if err != nil {
-			log.Fatalln(err)
+			log.Println(err)
 			return
 		}
 		serviceData.PostSleep = sleepNumber
