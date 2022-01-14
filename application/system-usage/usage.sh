@@ -1,7 +1,7 @@
 #!/bin/sh
 echo "Output file name: $1"
 echo "Running..."
-echo "Memory(MB)-Used Memory(MB)-Total Memory-Used-Percent(%) CPU-Load(%) Date" > $1
+echo "Memory(MB)-Used Memory(MB)-Total Memory-Used-Percent(%) CPU-Load Date" > $1
 
 while :
 do
