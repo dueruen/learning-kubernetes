@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nats-demo-producer-deploy
+  labels:
+    app: nats-demo-producer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nats-demo-producer
+  template:
+    metadata:
+      labels:
+        app: nats-demo-producer
+    spec:
+      containers:
+      - name: nats-demo-producer
+        image: "dueruen/learning-kubernetes:nats-demo-arm"
+        imagePullPolicy: "Always"
+        env:
+          - name: NAME
+            value: "nats-demo-producer"
+          - name: HTTP_PORT
+            value: "8080"
+          - name: NATS_URL
+            value: "nats:6222"
+          - name: NATS_TOPIC
+            value: "text"
+          - name: NATS_PRODUCER
+            value: "TRUE"
+        ports:
+          - name: http
+            containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nats-demo-producer-service
+  labels:
+    app: nats-demo-producer
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+      
+  selector:
+    app: nats-demo-producer

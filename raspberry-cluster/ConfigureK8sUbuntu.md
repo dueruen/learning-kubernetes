@@ -92,3 +92,7 @@ cat ~/.ssh/id_rsa.pub | ssh newUser@k8s-worker-01 "mkdir -p ~/.ssh && cat >> ~/.
     "hidden": false,
     "name": "k8s-worker-01"
 }
+
+
+# Reset cluser
+sudo kubeadm reset
