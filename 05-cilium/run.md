@@ -9,6 +9,9 @@ sudo tar xzvfC hubble-linux-arm64.tar.gz /usr/local/bin
 
 rm hubble-linux-arm64.tar.gz{,.sha256sum}
 
+kubectl -n kube-system port-forward svc/hubble-ui 8080:80 --address='0.0.0.0'
+kubectl -n cilium-monitoring port-forward svc/grafana 3000:3000 --address='0.0.0.0'
+
 
 
 helm upgrade cilium cilium/cilium --version 1.11.2 \
@@ -19,3 +22,29 @@ helm upgrade cilium cilium/cilium --version 1.11.2 \
    --set hubble.relay.enabled=true \
    --set hubble.ui.enabled=true \
    --set hubble.metrics.enabled="{dns,drop,tcp,flow,port-distribution,icmp,http}"
+
+helm install cilium cilium/cilium --version 1.11.2 \
+   --namespace kube-system \
+   --set nodeinit.enabled=true \
+   --set kubeProxyReplacement=partial \
+   --set hostServices.enabled=false \
+   --set externalIPs.enabled=true \
+   --set nodePort.enabled=true \
+   --set hostPort.enabled=true \
+   --set image.pullPolicy=IfNotPresent \
+   --set ipam.mode=kubernetes \
+   --set hubble.enabled=true \
+   --set hubble.listenAddress=":4244" \
+   --set hubble.relay.enabled=true \
+   --set hubble.ui.enabled=true
+
+helm upgrade cilium cilium/cilium --version 1.11.2 \
+   --namespace kube-system \
+   --reuse-values \
+   --set hubble.metrics.enabled="{dns,drop,tcp,flow,icmp,http}"
+   --set prometheus.enabled=true \
+   --set operator.prometheus.enabled=true
+
+   --set hubble.relay.enabled=true \
+   --set externalIPs.enabled=true \
+   --set hubble.ui.enabled=true
