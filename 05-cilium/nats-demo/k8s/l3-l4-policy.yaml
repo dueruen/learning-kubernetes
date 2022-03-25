@@ -1,0 +1,18 @@
+apiVersion: "cilium.io/v2"
+kind: CiliumNetworkPolicy
+metadata:
+  name: "rule1"
+spec:
+  description: "L3-L4 policy to restrict access to only high"
+  endpointSelector:
+    matchLabels:
+      accessLevel: high
+      app: nats-demo-producer
+  ingress:
+  - fromEndpoints:
+    - matchLabels:
+        accessLevel: high
+    toPorts:
+    - ports:
+      - port: "8080"
+        protocol: TCP
