@@ -13,7 +13,7 @@ kubectl -n kube-system port-forward svc/hubble-ui 8080:80 --address='0.0.0.0'
 kubectl -n cilium-monitoring port-forward svc/grafana 3000:3000 --address='0.0.0.0'
 kubectl port-forward svc/nats-demo-subscriber-service 8081:8080 --address='0.0.0.0'
 
-kubectl apply -f l7-policy.yaml
+kubectl create -f l7-policy.yaml
 kubectl apply -f producer-low-access.yaml
 kubectl apply -f producer.yaml
 kubectl apply -f subscriber.yaml

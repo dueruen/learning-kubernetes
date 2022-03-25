@@ -31,7 +31,7 @@ spec:
           - name: NATS_PRODUCER
             value: "TRUE"
           - name: CALL_URL
-            value: "nats-demo-producer-service://nats-demo-producer-service:4222"            
+            value: "nats-demo-producer-service://nats-demo-producer-service:80"            
         ports:
           - name: http
             containerPort: 80
