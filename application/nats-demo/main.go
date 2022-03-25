@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
@@ -18,16 +19,30 @@ var httpPort = "8080"
 var natsURL = nats.DefaultURL
 var natsTopic = "default"
 var natsProducer = ""
+var callURL = ""
 
 func handler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
-		publicToNats()
 		w.WriteHeader(http.StatusOK)
-	case "POST":
-		publicToNats()
-		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("YES... this is " + serviceName))
 	}
+}
+
+func randomCalls() {
+	resp, err := http.Get(callURL)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	log.Println(body)
 }
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
@@ -44,6 +59,7 @@ func getEnvs() {
 	natsURLEnv := os.Getenv("NATS_URL")
 	natsTopicEnv := os.Getenv("NATS_TOPIC")
 	natsProducerEnv := os.Getenv("NATS_PRODUCER")
+	callURLENV := os.Getenv("CALL_URL")
 
 	if serviceNameEnv != "" {
 		serviceName = serviceNameEnv
@@ -59,6 +75,9 @@ func getEnvs() {
 	}
 	if natsProducerEnv != "" {
 		natsProducer = natsProducerEnv
+	}
+	if callURLENV != "" {
+		callURL = callURLENV
 	}
 }
 
@@ -120,6 +139,17 @@ func main() {
 		go func() {
 			for {
 				publicToNats()
+
+				sleepTime := time.Duration(rand.Intn(5)) * time.Second
+				time.Sleep(sleepTime)
+			}
+		}()
+	}
+
+	if callURL != "" {
+		go func() {
+			for {
+				randomCalls()
 
 				sleepTime := time.Duration(rand.Intn(5)) * time.Second
 				time.Sleep(sleepTime)
