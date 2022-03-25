@@ -13,6 +13,7 @@ spec:
     metadata:
       labels:
         app: nats-demo-subscriber
+        accessLevel: high
     spec:
       containers:
       - name: nats-demo-subscriber
