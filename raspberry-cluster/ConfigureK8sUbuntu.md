@@ -1,5 +1,7 @@
 https://opensource.com/article/20/6/kubernetes-raspberry-pi
 https://www.learnlinux.tv/building-a-10-node-raspberry-pi-kubernetes-cluster/
+https://www.youtube.com/watch?v=MO8N79lQSWU&ab_channel=LearnLinuxTV
+cilium as network driver https://www.talos.dev/v0.14/guides/deploying-cilium/
 
 ssh ubuntu@ip
 psw: ubuntu
@@ -58,6 +60,7 @@ mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
  
+OR use cilium
 kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
 
 kubectl get pods --all-namespaces

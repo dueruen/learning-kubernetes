@@ -42,7 +42,7 @@ func randomCalls() {
 		return
 	}
 
-	log.Println(body)
+	log.Println(string(body))
 }
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {

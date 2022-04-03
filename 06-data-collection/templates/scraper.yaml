@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scraper-deploy
+  labels:
+    app: scraper
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: scraper
+  template:
+    metadata:
+      labels:
+        app: scraper
+        accessLevel: high
+    spec:
+      containers:
+      - name: scraper
+        image: "dueruen/learning-kubernetes:scraper-amd64"
+        imagePullPolicy: "Always"
+        ports:
+          - name: http
+            containerPort: 80
+        env:
+          - name: PORT
+            value: "80"       
+          - name: SCRAPE_ENDPOINTS
+            value: {{ Values.scraper.endpoints}}                    
+        # livenessProbe:
+        #   httpGet:
+        #     path: /health
+        #     port: 80
+        #     scheme: HTTP
+        #   initialDelaySeconds: 5
+        #   periodSeconds: 15
+        #   timeoutSeconds: 5
+        # readinessProbe:
+        #   httpGet:
+        #     path: /readiness
+        #     port: 80
+        #     scheme: HTTP
+        #   initialDelaySeconds: 5
+        #   timeoutSeconds: 1     
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: scraper-service
+  labels:
+    app: scraper
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      
+  selector:
+    app: scraper

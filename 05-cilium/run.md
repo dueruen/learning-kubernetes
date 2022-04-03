@@ -11,7 +11,12 @@ rm hubble-linux-arm64.tar.gz{,.sha256sum}
 
 kubectl -n kube-system port-forward svc/hubble-ui 8080:80 --address='0.0.0.0'
 kubectl -n cilium-monitoring port-forward svc/grafana 3000:3000 --address='0.0.0.0'
+kubectl -n cilium-monitoring port-forward svc/prometheus 3001:9090 --address='0.0.0.0'
 kubectl port-forward svc/nats-demo-subscriber-service 8081:8080 --address='0.0.0.0'
+
+kubectl -n jaeger port-forward svc/jaeger-default-query 8082:16686 --address='0.0.0.0'
+
+kubectl port-forward svc/my-kube-state-metrics 8083:8080 --address='0.0.0.0'
 
 kubectl create -f l7-policy.yaml
 kubectl apply -f producer-low-access.yaml
@@ -45,10 +50,18 @@ helm install cilium cilium/cilium --version 1.11.2 \
 helm upgrade cilium cilium/cilium --version 1.11.2 \
    --namespace kube-system \
    --reuse-values \
-   --set hubble.metrics.enabled="{dns,drop,tcp,flow,icmp,http}"
+   --set hubble.metrics.enabled="{dns,drop,tcp,flow,icmp,http}" \
    --set prometheus.enabled=true \
-   --set operator.prometheus.enabled=true
-
+   --set operator.prometheus.enabled=true \
    --set hubble.relay.enabled=true \
    --set externalIPs.enabled=true \
    --set hubble.ui.enabled=true
+
+
+helm install cilium cilium/cilium --version 1.11.2 \
+   --namespace kube-system \
+   --set prometheus.enabled=true \
+   --set operator.prometheus.enabled=true \
+   --set hubble.relay.enabled=true \
+   --set hubble.ui.enabled=true \
+   --set hubble.metrics.enabled="{dns,drop,tcp,flow,port-distribution,icmp,http}"   
