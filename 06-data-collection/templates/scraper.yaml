@@ -26,7 +26,7 @@ spec:
           - name: PORT
             value: "80"       
           - name: SCRAPE_ENDPOINTS
-            value: {{ Values.scraper.endpoints}}                    
+            value: {{ .Values.scraper.endpoints}}                    
         # livenessProbe:
         #   httpGet:
         #     path: /health

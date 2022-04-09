@@ -1,22 +1,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: kafka-demo-deploy
+  name: tracing-test-deploy
   labels:
-    app: kafka-demo
+    app: tracing-test
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: kafka-demo
+      app: tracing-test
   template:
     metadata:
       labels:
-        app: kafka-demo
+        app: tracing-test
         accessLevel: high
     spec:
       containers:
-      - name: kafka-demo
+      - name: tracing-test
         image: "dueruen/learning-kubernetes:kafka-demo-amd64"
         imagePullPolicy: "Always"
         ports:
@@ -24,9 +24,13 @@ spec:
             containerPort: 80
         env:
           - name: NAME
-            value: "kafka-demo"
+            value: "tracing-test"
+          # - name: TRACE_ENDPOINT
+          #   value: "scraper-service:80"
           - name: TRACE_ENDPOINT
-            value: "scraper-service:80"
+            value: "otel-collector:4318"          
+          - name: TRACE_URL
+            value: "/v1/traces"            
           - name: PORT
             value: "80"                            
         # livenessProbe:
@@ -48,9 +52,9 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: kafka-demo-service
+  name: tracing-test-service
   labels:
-    app: kafka-demo
+    app: tracing-test
 spec:
   type: ClusterIP
   ports:
@@ -59,4 +63,4 @@ spec:
       targetPort: http
       
   selector:
-    app: kafka-demo
+    app: tracing-test
