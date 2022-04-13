@@ -1,0 +1,25 @@
+# See for configuration: https://docs.confluent.io/operator/2.0.0/co-storage.html#use-statically-provisioned-persistent-volumes
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: data-01
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: my-storage-class
+  local:
+     path: /mnt/volume_ams3_01/data-01 # Must be a path on the worker node
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - ubuntu-s-2vcpu-4gb-ams3-02
+---
