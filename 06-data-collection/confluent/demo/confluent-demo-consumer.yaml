@@ -30,7 +30,7 @@ spec:
           - name: CONSUMER_TOPIC
             value: "topic-test" 
           - name: CONSUMER_GROUP_ID
-            value: "confluent-consumer-test"                                            
+            value: "foo"                                            
 ---
 apiVersion: v1
 kind: Service
