@@ -1,0 +1,36 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zookeeper
+spec:
+  selector:
+    matchLabels:
+      app: zook
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: zook
+    spec:
+      containers:
+      - name: zookeeper
+        image: docker.io/cilium/zookeeper:1.0
+        ports:
+        - containerPort: 2181
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zook
+  labels:
+    app: zook
+spec:
+  ports:
+  - port: 2181
+    name: zookeeper-port
+    targetPort: 2181
+    protocol: TCP
+  selector:
+    app: zook
+---

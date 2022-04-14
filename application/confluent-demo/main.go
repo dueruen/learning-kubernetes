@@ -22,6 +22,10 @@ func main() {
 		*consumerGrupId = "go_example_group_1"
 	}
 
+	if producerTopic == nil {
+		*producerTopic = "default"
+	}
+
 	if consumerTopic == nil {
 		*consumerTopic = "default"
 	}
@@ -32,7 +36,7 @@ func main() {
 	producerShutdown := make(chan bool)
 	if producer != nil && *producer != "" {
 		waitForProducer = true
-		go startProducer(*bootstrapServer, consumerTopic, producerShutdown)
+		go startProducer(*bootstrapServer, producerTopic, producerShutdown)
 	}
 
 	waitForConsumer := false

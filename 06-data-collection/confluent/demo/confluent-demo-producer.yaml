@@ -1,22 +1,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: confluent-demo-consumer
+  name: confluent-demo-producer
   labels:
-    app: confluent-demo-consumer
+    app: confluent-demo-producer
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: confluent-demo-consumer
+      app: confluent-demo-producer
   template:
     metadata:
       labels:
-        app: confluent-demo-consumer
+        app: confluent-demo-producer
         accessLevel: high
     spec:
       containers:
-      - name: confluent-demo-consumer
+      - name: confluent-demo-producer
         image: "dueruen/learning-kubernetes:confluent-demo-amd64"
         imagePullPolicy: "Always"
         ports:
@@ -24,20 +24,18 @@ spec:
             containerPort: 80
         env:
           - name: BOOTSTRAP_SERVER
-            value: "svc/kafka:9092"
-          - name: CONSUMER
+            value: "kafka:9092"
+          - name: PRODUCER
             value: "TRUE"
-          - name: CONSUMER_TOPIC
-            value: "topic-test" 
-          - name: CONSUMER_GROUP_ID
-            value: "confluent-consumer-test"                                            
+          - name: PRODUCER_TOPIC
+            value: "topic-test"                              
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: confluent-demo-consumer
+  name: confluent-demo-producer
   labels:
-    app: confluent-demo-consumer
+    app: confluent-demo-producer
 spec:
   type: ClusterIP
   ports:
@@ -46,4 +44,4 @@ spec:
       targetPort: http
       
   selector:
-    app: confluent-demo-consumer
+    app: confluent-demo-producer
