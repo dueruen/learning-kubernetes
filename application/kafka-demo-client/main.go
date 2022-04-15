@@ -22,7 +22,8 @@ import (
 )
 
 var (
-	url = flag.String("server", os.Getenv("SERVER"), "URL of server to call")
+	url          = flag.String("server", os.Getenv("SERVER"), "URL of server to call")
+	otelEndpoint = flag.String("otel-endpoint", os.Getenv("OTEL_ENDPOINT"), "OTEL_ENDPOINT")
 )
 
 func initTracer(ctx context.Context) *sdktrace.TracerProvider {
@@ -30,6 +31,7 @@ func initTracer(ctx context.Context) *sdktrace.TracerProvider {
 	// the collected spans.
 	options := []otlptracegrpc.Option{
 		otlptracegrpc.WithInsecure(),
+		otlptracegrpc.WithEndpoint(*otelEndpoint),
 	}
 
 	client := otlptracegrpc.NewClient(options...)

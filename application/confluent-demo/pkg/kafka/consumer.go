@@ -1,7 +1,6 @@
 package kafka
 
 import (
-	"context"
 	"encoding/json"
 	"os"
 	"os/signal"
@@ -10,12 +9,10 @@ import (
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	getter "github.com/dueruen/learning-kubernetes/application/confluent-demo/pkg/http"
-	"go.opentelemetry.io/otel/baggage"
-	"go.uber.org/zap"
 )
 
-func startConsumer(bootstrapServer string, groupId string, topic *string, consumerShutdown chan bool, logger *zap.Logger) {
-	logger.Sugar().Infof("Starting consumer - server: %s - groupId: %s - topic: %s\n", bootstrapServer, groupId, *topic)
+func (srv *KafkaServer) startConsumer(bootstrapServer string, groupId string, topic *string, consumerShutdown chan bool) {
+	srv.logger.Sugar().Infof("Starting consumer - server: %s - groupId: %s - topic: %s\n", bootstrapServer, groupId, *topic)
 
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
@@ -26,23 +23,23 @@ func startConsumer(bootstrapServer string, groupId string, topic *string, consum
 		"auto.offset.reset": "earliest",
 	})
 	if err != nil {
-		logger.Sugar().Errorf("Failed to create consumer: %s", err)
+		srv.logger.Sugar().Errorf("Failed to create consumer: %s", err)
 		os.Exit(1)
 	}
 
 	err = c.SubscribeTopics([]string{*topic}, nil)
 	if err != nil {
-		logger.Sugar().Errorf("Failed to subsribe to topic: %s  - Error: %s", *topic, err)
+		srv.logger.Sugar().Errorf("Failed to subsribe to topic: %s  - Error: %s", *topic, err)
 		os.Exit(1)
 	}
 
 	totalCount := 0
 	run := true
-	logger.Sugar().Infof("Consumer running")
+	srv.logger.Sugar().Infof("Consumer running")
 	for run == true {
 		select {
 		case sig := <-sigchan:
-			logger.Sugar().Infof("Caught signal %v: terminating consumer\n", sig)
+			srv.logger.Sugar().Infof("Caught signal %v: terminating consumer\n", sig)
 			consumerShutdown <- true
 			run = false
 		default:
@@ -52,8 +49,10 @@ func startConsumer(bootstrapServer string, groupId string, topic *string, consum
 				continue
 			}
 
+			_, span := srv.tracer.Start(srv.context, "consume message")
+
 			if msg.Headers != nil {
-				logger.Sugar().Debugf("%% Headers: %v\n", msg.Headers)
+				srv.logger.Sugar().Debugf("%% Headers: %v\n", msg.Headers)
 			}
 
 			recordKey := string(msg.Key)
@@ -61,20 +60,20 @@ func startConsumer(bootstrapServer string, groupId string, topic *string, consum
 			data := KafkaMessage{}
 			err = json.Unmarshal(message, &data)
 			if err != nil {
-				logger.Sugar().Errorf("Failed to decode JSON at offset %d: %v", msg.TopicPartition.Offset, err)
+				srv.logger.Sugar().Errorf("Failed to decode JSON at offset %d: %v", msg.TopicPartition.Offset, err)
 				continue
 			}
 			count := data.Count
 			totalCount = count
-			logger.Sugar().Debugf("Consumed record with key %s and value %d, and updated total count to %d -- Message was: %s\n", recordKey, data.Count, totalCount, data.Message)
+			srv.logger.Sugar().Debugf("Consumed record with key %s and value %d, and updated total count to %d -- Message was: %s\n", recordKey, data.Count, totalCount, data.Message)
 
 			go func() {
-				ctx := baggage.ContextWithoutBaggage(context.Background())
-				getter.GetFromBackend(logger, ctx)
+				getter.GetFromBackend(srv.logger, srv.context)
+				span.End()
 			}()
 		}
 	}
 
-	logger.Sugar().Infof("END of consumer")
+	srv.logger.Sugar().Infof("END of consumer")
 	c.Close()
 }

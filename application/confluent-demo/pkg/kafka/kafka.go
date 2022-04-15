@@ -1,9 +1,12 @@
 package kafka
 
 import (
+	"context"
 	"flag"
 	"os"
 
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 )
 
@@ -16,7 +19,25 @@ var (
 	consumerGrupId  = flag.String("consumer-group-id", os.Getenv("CONSUMER_GROUP_ID"), "CONSUMER_GROUP_ID")
 )
 
-func InitKafka(logger *zap.Logger) chan bool {
+type KafkaServer struct {
+	logger         *zap.Logger
+	tracer         trace.Tracer
+	tracerProvider *sdktrace.TracerProvider
+	context        context.Context
+}
+
+func NewKafkaServer(logger *zap.Logger, tracerProvider *sdktrace.TracerProvider, tracer trace.Tracer, context context.Context) (*KafkaServer, error) {
+	srv := &KafkaServer{
+		logger:         logger,
+		tracer:         tracer,
+		tracerProvider: tracerProvider,
+		context:        context,
+	}
+
+	return srv, nil
+}
+
+func (srv *KafkaServer) InitKafka() chan bool {
 	shutdown := make(chan bool)
 
 	if consumerGrupId == nil {
@@ -35,18 +56,18 @@ func InitKafka(logger *zap.Logger) chan bool {
 	producerShutdown := make(chan bool)
 	if producer != nil && *producer != "" {
 		waitForProducer = true
-		go startProducer(*bootstrapServer, producerTopic, producerShutdown, logger)
+		go srv.startProducer(*bootstrapServer, producerTopic, producerShutdown)
 	}
 
 	waitForConsumer := false
 	consumerShutdown := make(chan bool)
 	if consumer != nil && *consumer != "" {
 		waitForConsumer = true
-		go startConsumer(*bootstrapServer, *consumerGrupId, consumerTopic, consumerShutdown, logger)
+		go srv.startConsumer(*bootstrapServer, *consumerGrupId, consumerTopic, consumerShutdown)
 	}
 
 	go func() {
-		logger.Debug("Kafka running")
+		srv.logger.Debug("Kafka running")
 		running := true
 		for running {
 			select {

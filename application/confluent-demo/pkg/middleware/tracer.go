@@ -28,12 +28,11 @@ var (
 	otelEndpoint        = flag.String("otel-endpoint", os.Getenv("OTEL_ENDPOINT"), "OTEL_ENDPOINT")
 )
 
-func InitTracer(logger *zap.Logger) (tracerProvider *sdktrace.TracerProvider, tracer trace.Tracer) {
+func InitTracer(logger *zap.Logger, ctx context.Context) (tracerProvider *sdktrace.TracerProvider, tracer trace.Tracer) {
 	logger.Debug("Init tracer", zap.String("otelServiceName", *otelServiceName))
 
-	ctx := context.Background()
-
 	if *otelServiceName == "" {
+		logger.Warn("NO OTEL SERVICE NAME - using noop provider")
 		nop := trace.NewNoopTracerProvider()
 		tracer = nop.Tracer(*otelServiceName)
 		return
@@ -43,6 +42,7 @@ func InitTracer(logger *zap.Logger) (tracerProvider *sdktrace.TracerProvider, tr
 		otlptracegrpc.WithInsecure(),
 	}
 
+	logger.Warn("NO OTEL SERVICE NAME - using noop provider: " + *otelEndpoint)
 	if *otelEndpoint != "" {
 		options = append(options, otlptracegrpc.WithEndpoint(*otelEndpoint))
 	}

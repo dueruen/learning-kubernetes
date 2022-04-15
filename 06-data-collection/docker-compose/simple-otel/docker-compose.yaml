@@ -1,0 +1,54 @@
+version: "2"
+services:
+
+  # Jaeger
+  jaeger-all-in-one:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "16686:16686"
+      - "14268"
+      - "14250"
+
+  # Collector
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib-dev:latest
+    command: ["--config=/etc/otel-collector-config.yaml", ""]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "1888:1888"   # pprof extension
+      - "8888:8888"   # Prometheus metrics exposed by the collector
+      - "8889:8889"   # Prometheus exporter metrics
+      - "13133:13133" # health_check extension
+      - "4317"        # OTLP gRPC receiver
+      - "55670:55679" # zpages extension
+    depends_on:
+      - jaeger-all-in-one
+
+  server:
+    container_name: server
+    build:
+      dockerfile: Dockerfile
+      context: ../../../application/kafka-demo
+    ports:
+      - "8991:8991"
+    environment:
+      - HTTP_PORT=8991
+      - OTEL_SERVICE_NAME=server
+      - OTEL_ENDPOINT=otel-collector:4317
+    depends_on:
+      - otel-collector
+
+  client:
+    container_name: client
+    build:
+      dockerfile: Dockerfile
+      context: ../../../application/kafka-demo-client
+    ports:
+      - "8992:8992"
+    environment:
+      - OTEL_SERVICE_NAME=producer
+      - SERVER=http://server:8991/long
+      - OTEL_ENDPOINT=otel-collector:4317
+    depends_on:
+      - otel-collector

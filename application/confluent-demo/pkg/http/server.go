@@ -26,10 +26,12 @@ type Server struct {
 	tracerProvider *sdktrace.TracerProvider
 }
 
-func NewServer(logger *zap.Logger) (*Server, error) {
+func NewServer(logger *zap.Logger, tracerProvider *sdktrace.TracerProvider, tracer trace.Tracer) (*Server, error) {
 	srv := &Server{
-		router: mux.NewRouter(),
-		logger: logger,
+		router:         mux.NewRouter(),
+		logger:         logger,
+		tracerProvider: tracerProvider,
+		tracer:         tracer,
 	}
 
 	return srv, nil
@@ -42,8 +44,9 @@ func (s *Server) registerHandlers() {
 }
 
 func (s *Server) registerMiddlewares() {
-	//otel := NewOpenTelemetryMiddleware()
-	//s.router.Use(otel)
+	// TODO tester uden ...
+	// otel := middleware.NewOpenTelemetryMiddleware()
+	// s.router.Use(otel)
 	httpLogger := middleware.NewLoggingMiddleware(s.logger)
 	s.router.Use(httpLogger.Handler)
 }
@@ -56,10 +59,6 @@ func (s *Server) ListenAndServe() chan bool {
 		sigchan := make(chan os.Signal, 1)
 		signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 		// ctx := context.Background()
-
-		tracerProvider, tracer := middleware.InitTracer(s.logger)
-		s.tracerProvider = tracerProvider
-		s.tracer = tracer
 
 		s.registerHandlers()
 		s.registerMiddlewares()

@@ -13,6 +13,7 @@ import (
 
 var (
 	otelServiceName = flag.String("otel-service-name", os.Getenv("OTEL_SERVICE_NAME"), "Service name for reporting to open telemetry address, when not set tracing is disabled")
+	httpPort        = flag.String("http-port", os.Getenv("HTTP_PORT"), "HTTP_PORT")
 )
 
 func main() {
@@ -29,7 +30,7 @@ func main() {
 		HttpServerTimeout:         30 * time.Second,
 		HttpServerShutdownTimeout: 30 * time.Second,
 		Host:                      "",
-		Port:                      "9898",
+		Port:                      *httpPort,
 	}
 
 	srv, _ := NewServer(&srvCfg, logger)

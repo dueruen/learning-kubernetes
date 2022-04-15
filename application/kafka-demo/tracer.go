@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"flag"
+	"os"
 
 	"github.com/gorilla/mux"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
@@ -26,6 +28,10 @@ const (
 	instrumentationName = "kafka-demo"
 )
 
+var (
+	otelEndpoint = flag.String("otel-endpoint", os.Getenv("OTEL_ENDPOINT"), "OTEL_ENDPOINT")
+)
+
 func (s *Server) initTracer(ctx context.Context) {
 	s.logger.Info("otelServiceName", zap.String("otelServiceName", *otelServiceName))
 	if *otelServiceName == "" {
@@ -36,6 +42,7 @@ func (s *Server) initTracer(ctx context.Context) {
 
 	options := []otlptracegrpc.Option{
 		otlptracegrpc.WithInsecure(),
+		otlptracegrpc.WithEndpoint(*otelEndpoint),
 	}
 
 	client := otlptracegrpc.NewClient(options...)

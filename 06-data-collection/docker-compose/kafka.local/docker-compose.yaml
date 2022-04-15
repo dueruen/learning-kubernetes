@@ -1,0 +1,105 @@
+version: "2"
+services:
+
+  # Jaeger
+  jaeger-all-in-one:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "16686:16686"
+      - "14268"
+      - "14250"
+
+  # Collector
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib-dev:latest
+    command: ["--config=/etc/otel-collector-config.yaml", ""]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "1888:1888"   # pprof extension
+      - "8888:8888"   # Prometheus metrics exposed by the collector
+      - "8889:8889"   # Prometheus exporter metrics
+      - "13133:13133" # health_check extension
+      - "4317"        # OTLP gRPC receiver
+      - "55670:55679" # zpages extension
+    depends_on:
+      - jaeger-all-in-one
+
+  kafka-consumer:
+    container_name: kafka-consumer.local
+    build:
+      dockerfile: Dockerfile
+      context: ../../../application/confluent-demo
+    ports:
+      - "8991:8991"
+    environment:
+      - LOG_LEVEL=warn
+      - BOOTSTRAP_SERVER=kafka:9092
+      - CONSUMER=true
+      - CONSUMER_TOPIC=topic-test
+      - CONSUMER_GROUP_ID=foo
+      - HTTP_PORT=8991
+      - OTEL_SERVICE_NAME=consumer
+      - INSTRUMENTATION_NAME=consumer
+      - BACKEND_URL=http://http-server:8993/long
+      - OTEL_ENDPOINT=otel-collector:4317
+    depends_on:
+      - otel-collector
+      - kafka
+
+  kafka-producer:
+    container_name: kafka-producer.local
+    build:
+      dockerfile: Dockerfile
+      context: ../../../application/confluent-demo
+    ports:
+      - "8992:8992"
+    environment:
+      - LOG_LEVEL=warn
+      - BOOTSTRAP_SERVER=kafka:9092
+      - PRODUCER=true
+      - PRODUCER_TOPIC=topic-test
+      - HTTP_PORT=8992
+      - OTEL_SERVICE_NAME=producer
+      - INSTRUMENTATION_NAME=producer
+      - OTEL_ENDPOINT=otel-collector:4317
+    depends_on:
+      - otel-collector
+      - kafka
+
+  http-server:
+    container_name: http-server.local
+    build:
+      dockerfile: Dockerfile
+      context: ../../../application/confluent-demo
+    ports:
+      - "8993:8993"
+    environment:
+      - LOG_LEVEL=warn    
+      - HTTP_PORT=8993
+      - OTEL_SERVICE_NAME=http-server
+      - INSTRUMENTATION_NAME=http-server
+      - OTEL_ENDPOINT=otel-collector:4317
+    depends_on:
+      - otel-collector
+
+  kafka:
+    container_name: kafka.local
+    image: docker.io/wurstmeister/kafka:1.1.0
+    ports:
+      - "9092:9092"
+    environment:
+      - KAFKA_ADVERTISED_HOST_NAME=kafka
+      - KAFKA_ZOOKEEPER_CONNECT=zook:2181
+      - KAFKA_BROKER_ID=1
+      - KAFKA_CREATE_TOPICS="topic-test:1:1"
+      - KAFKA_ZOOKEEPER_SESSION_TIMEOUT_MS=60000
+      - KAFKA_ZOOKEEPER_CONNECTION_TIMEOUT_MS=60000
+    depends_on:
+      - zook      
+
+  zook:
+    container_name: zook.local
+    image: docker.io/cilium/zookeeper:1.0
+    ports:
+      - "2181:2181"       
