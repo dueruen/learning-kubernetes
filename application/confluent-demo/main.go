@@ -2,68 +2,40 @@ package main
 
 import (
 	"flag"
-	"fmt"
-	"os"
-)
 
-var (
-	bootstrapServer = flag.String("bootstrap-server", os.Getenv("BOOTSTRAP_SERVER"), "BOOTSTRAP_SERVER")
-	producer        = flag.String("producer", os.Getenv("PRODUCER"), "PRODUCER")
-	producerTopic   = flag.String("producer-topic", os.Getenv("PRODUCER_TOPIC"), "PRODUCER_TOPIC")
-	consumer        = flag.String("consumer", os.Getenv("CONSUMER"), "CONSUMER")
-	consumerTopic   = flag.String("consumer-topic", os.Getenv("CONSUMER_TOPIC"), "CONSUMER_TOPIC")
-	consumerGrupId  = flag.String("consumer-group-id", os.Getenv("CONSUMER_GROUP_ID"), "CONSUMER_GROUP_ID")
+	"github.com/dueruen/learning-kubernetes/application/confluent-demo/pkg/http"
+	"github.com/dueruen/learning-kubernetes/application/confluent-demo/pkg/kafka"
+	"github.com/dueruen/learning-kubernetes/application/confluent-demo/pkg/middleware"
+	"go.uber.org/zap"
 )
 
 func main() {
 	flag.Parse()
 
-	if consumerGrupId == nil {
-		*consumerGrupId = "go_example_group_1"
-	}
+	logger, _ := middleware.InitZap()
+	defer logger.Sync()
+	stdLog := zap.RedirectStdLog(logger)
+	defer stdLog()
 
-	if producerTopic == nil {
-		*producerTopic = "default"
-	}
+	srv, _ := http.NewServer(logger)
+	httpDone := false
+	httpShutdown := srv.ListenAndServe()
 
-	if consumerTopic == nil {
-		*consumerTopic = "default"
-	}
-
-	fmt.Println("Starting up")
-
-	waitForProducer := false
-	producerShutdown := make(chan bool)
-	if producer != nil && *producer != "" {
-		waitForProducer = true
-		go startProducer(*bootstrapServer, producerTopic, producerShutdown)
-	}
-
-	waitForConsumer := false
-	consumerShutdown := make(chan bool)
-	if consumer != nil && *consumer != "" {
-		waitForConsumer = true
-		go startConsumer(*bootstrapServer, *consumerGrupId, consumerTopic, consumerShutdown)
-	}
-
-	fmt.Println("Running")
-	running := true
-	for running {
+	kafkaShutdown := kafka.InitKafka(logger)
+	kafkaDone := false
+	run := true
+	for run {
 		select {
-		case _ = <-producerShutdown:
-			waitForProducer = false
-		case _ = <-consumerShutdown:
-			waitForConsumer = false
+		case _ = <-kafkaShutdown:
+			kafkaDone = true
+		case _ = <-httpShutdown:
+			httpDone = true
 		default:
-			if !waitForProducer && !waitForConsumer {
-				running = false
+			if kafkaDone && httpDone {
+				run = false
 			}
 		}
 	}
-	fmt.Println("Shutting down")
-}
 
-type KafkaMessage struct {
-	Message string
-	Count   int
+	logger.Sugar().Infof("Shutting down")
 }

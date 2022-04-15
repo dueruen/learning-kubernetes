@@ -1,8 +1,7 @@
-package main
+package kafka
 
 import (
 	"encoding/json"
-	"fmt"
 	"math/rand"
 	"os"
 	"os/signal"
@@ -11,46 +10,47 @@ import (
 	"time"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"go.uber.org/zap"
 )
 
-func startProducer(bootstrapServer string, topic *string, producerShutdown chan bool) {
-	fmt.Printf("Starting producer - server: %s - topic: %s\n", bootstrapServer, *topic)
+func startProducer(bootstrapServer string, topic *string, producerShutdown chan bool, logger *zap.Logger) {
+	logger.Sugar().Infof("Starting producer - server: %s - topic: %s\n", bootstrapServer, *topic)
 
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 
 	p, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": bootstrapServer})
 	if err != nil {
-		fmt.Printf("Failed to create producer: %s", err)
+		logger.Sugar().Errorf("Failed to create producer: %s", err)
 		os.Exit(1)
 	}
 
-	fmt.Printf("Created Producer %v\n", p)
+	logger.Sugar().Infof("Created Producer %v\n", p)
 
 	go func() {
-		fmt.Println("Loop events")
+		logger.Sugar().Debugf("Loop events")
 		for e := range p.Events() {
 			switch ev := e.(type) {
 			case *kafka.Message:
 				if ev.TopicPartition.Error != nil {
-					fmt.Printf("Failed to deliver message: %v\n", ev.TopicPartition)
+					logger.Sugar().Errorf("Failed to deliver message: %v\n", ev.TopicPartition)
 				} else {
-					fmt.Printf("Successfully produced record to topic %s partition [%d] @ offset %v\n",
+					logger.Sugar().Debugf("Successfully produced record to topic %s partition [%d] @ offset %v\n",
 						*ev.TopicPartition.Topic, ev.TopicPartition.Partition, ev.TopicPartition.Offset)
 				}
 			}
 		}
-		fmt.Println("Loop events OVER")
+		logger.Sugar().Infof("Loop events OVER")
 	}()
 
 	count := 0
 	run := true
-	fmt.Println("Producer running")
+	logger.Sugar().Infof("Producer running")
 	for run == true {
 		select {
 		case sig := <-sigchan:
 			p.Flush(10)
-			fmt.Printf("Caught signal %v: terminating producer\n", sig)
+			logger.Sugar().Infof("Caught signal %v: terminating producer\n", sig)
 			producerShutdown <- true
 			run = false
 		default:
@@ -62,7 +62,7 @@ func startProducer(bootstrapServer string, topic *string, producerShutdown chan 
 				Count:   count,
 			}
 			recordValue, _ := json.Marshal(&data)
-			fmt.Printf("Preparing to produce record: %s\t%s\n", recordKey, recordValue)
+			logger.Sugar().Debugf("Preparing to produce record: %s\t%s\n", recordKey, recordValue)
 			p.Produce(&kafka.Message{
 				TopicPartition: kafka.TopicPartition{Topic: topic, Partition: kafka.PartitionAny},
 				Key:            []byte(recordKey),
@@ -70,9 +70,9 @@ func startProducer(bootstrapServer string, topic *string, producerShutdown chan 
 				Headers:        []kafka.Header{{Key: "myTestHeader", Value: []byte("header values are binary")}},
 			}, nil)
 
-			p.Flush(10)
 			time.Sleep(time.Duration(number/10) * time.Second)
 			count++
 		}
 	}
+	logger.Sugar().Infof("Producer down")
 }

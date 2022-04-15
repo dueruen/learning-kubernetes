@@ -1,49 +1,43 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: confluent-demo-producer
+  name: confluent-demo-http
   labels:
-    app: confluent-demo-producer
+    app: confluent-demo-http
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: confluent-demo-producer
+      app: confluent-demo-http
   template:
     metadata:
       labels:
-        app: confluent-demo-producer
+        app: confluent-demo-http
         accessLevel: high
     spec:
       containers:
-      - name: confluent-demo-producer
+      - name: confluent-demo-http
         image: "dueruen/learning-kubernetes:confluent-demo-amd64"
         imagePullPolicy: "Always"
         ports:
           - name: http
             containerPort: 80
         env:
-          - name: BOOTSTRAP_SERVER
-            value: "kafka:9092"
-          - name: PRODUCER
-            value: "TRUE"
-          - name: PRODUCER_TOPIC
-            value: "topic-test"    
           - name: HTTP_PORT
             value: "80"                                                      
           - name: OTEL_SERVICE_NAME
-            value: "consumer"   
+            value: "http"   
           - name: INSTRUMENTATION_NAME
-            value: "consumer"     
+            value: "http"
           - name: OTEL_ENDPOINT
-            value: ""                                                    
+            value: "otelcol-hubble-collector.kube-system.svc.cluster.local:55690"                                           
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: confluent-demo-producer
+  name: confluent-demo-http
   labels:
-    app: confluent-demo-producer
+    app: confluent-demo-http
 spec:
   type: ClusterIP
   ports:
@@ -52,4 +46,4 @@ spec:
       targetPort: http
       
   selector:
-    app: confluent-demo-producer
+    app: confluent-demo-http

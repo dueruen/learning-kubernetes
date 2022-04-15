@@ -30,7 +30,17 @@ spec:
           - name: CONSUMER_TOPIC
             value: "topic-test" 
           - name: CONSUMER_GROUP_ID
-            value: "foo"                                            
+            value: "foo"    
+          - name: HTTP_PORT
+            value: "80"                                                      
+          - name: OTEL_SERVICE_NAME
+            value: "consumer"   
+          - name: INSTRUMENTATION_NAME
+            value: "consumer"   
+          - name: BACKEND_URL
+            value: "http://confluent-demo-http:80/long"
+          - name: OTEL_ENDPOINT
+            value: "otelcol-hubble-collector.kube-system.svc.cluster.local:55690"                                                                
 ---
 apiVersion: v1
 kind: Service
