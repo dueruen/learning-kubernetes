@@ -42,7 +42,6 @@ func InitTracer(logger *zap.Logger, ctx context.Context) (tracerProvider *sdktra
 		otlptracegrpc.WithInsecure(),
 	}
 
-	logger.Warn("NO OTEL SERVICE NAME - using noop provider: " + *otelEndpoint)
 	if *otelEndpoint != "" {
 		options = append(options, otlptracegrpc.WithEndpoint(*otelEndpoint))
 	}
@@ -71,6 +70,17 @@ func InitTracer(logger *zap.Logger, ctx context.Context) (tracerProvider *sdktra
 		&jaeger.Jaeger{},
 		&ot.OT{},
 	))
+
+	// exporter, err := stdout.New(stdout.WithPrettyPrint())
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// tracerProvider = sdktrace.NewTracerProvider(
+	// 	sdktrace.WithSampler(sdktrace.AlwaysSample()),
+	// 	sdktrace.WithBatcher(exporter),
+	// )
+	// otel.SetTracerProvider(tracerProvider)
+	// otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}))
 
 	tracer = tracerProvider.Tracer(
 		*instrumentationName,

@@ -55,7 +55,7 @@ services:
     ports:
       - "8992:8992"
     environment:
-      - LOG_LEVEL=warn
+      - LOG_LEVEL=debug
       - BOOTSTRAP_SERVER=kafka:9092
       - PRODUCER=true
       - PRODUCER_TOPIC=topic-test

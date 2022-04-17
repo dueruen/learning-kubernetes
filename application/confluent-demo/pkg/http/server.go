@@ -44,9 +44,8 @@ func (s *Server) registerHandlers() {
 }
 
 func (s *Server) registerMiddlewares() {
-	// TODO tester uden ...
-	// otel := middleware.NewOpenTelemetryMiddleware()
-	// s.router.Use(otel)
+	otel := middleware.NewOpenTelemetryMiddleware()
+	s.router.Use(otel)
 	httpLogger := middleware.NewLoggingMiddleware(s.logger)
 	s.router.Use(httpLogger.Handler)
 }
@@ -88,7 +87,6 @@ func (s *Server) ListenAndServe() chan bool {
 		shutdown <- true
 	}()
 
-	s.logger.Info("HTTP shutdown")
 	return shutdown
 }
 

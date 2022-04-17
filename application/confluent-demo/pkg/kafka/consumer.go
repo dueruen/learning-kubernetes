@@ -1,6 +1,7 @@
 package kafka
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 	"os/signal"
@@ -9,6 +10,9 @@ import (
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	getter "github.com/dueruen/learning-kubernetes/application/confluent-demo/pkg/http"
+	"go.opentelemetry.io/otel"
+	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func (srv *KafkaServer) startConsumer(bootstrapServer string, groupId string, topic *string, consumerShutdown chan bool) {
@@ -49,7 +53,10 @@ func (srv *KafkaServer) startConsumer(bootstrapServer string, groupId string, to
 				continue
 			}
 
-			_, span := srv.tracer.Start(srv.context, "consume message")
+			ctx := otel.GetTextMapPropagator().Extract(context.Background(), NewConsumerMessageCarrier(msg))
+			ctx, span := srv.tracer.Start(ctx, "consume message", trace.WithAttributes(
+				semconv.MessagingOperationProcess,
+			))
 
 			if msg.Headers != nil {
 				srv.logger.Sugar().Debugf("%% Headers: %v\n", msg.Headers)
@@ -68,7 +75,7 @@ func (srv *KafkaServer) startConsumer(bootstrapServer string, groupId string, to
 			srv.logger.Sugar().Debugf("Consumed record with key %s and value %d, and updated total count to %d -- Message was: %s\n", recordKey, data.Count, totalCount, data.Message)
 
 			go func() {
-				getter.GetFromBackend(srv.logger, srv.context)
+				getter.GetFromBackend(srv.logger, ctx, srv.tracer)
 				span.End()
 			}()
 		}

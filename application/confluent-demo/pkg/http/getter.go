@@ -18,14 +18,18 @@ var (
 	backendURL = flag.String("backend-url", os.Getenv("BACKEND_URL"), "BACKEND_URL")
 )
 
-func GetFromBackend(logger *zap.Logger, ctx context.Context) {
-	// _, span := s.tracer.Start(r.Context(), "Long running task - handler")
-	span := trace.SpanFromContext(ctx)
+func GetFromBackend(logger *zap.Logger, ctx context.Context, tracer trace.Tracer) {
+	newCtx, span := tracer.Start(ctx, "Get from backend")
+	//span := trace.SpanFromContext(ctx)
 	client := http.Client{Transport: otelhttp.NewTransport(http.DefaultTransport)}
 
 	if *backendURL != "" {
-		ctx = httptrace.WithClientTrace(ctx, otelhttptrace.NewClientTrace(ctx))
-		req, _ := http.NewRequestWithContext(ctx, "GET", *backendURL, nil)
+		ctx = httptrace.WithClientTrace(newCtx, otelhttptrace.NewClientTrace(newCtx))
+		req, err := http.NewRequestWithContext(newCtx, "GET", *backendURL, nil)
+		if err != nil {
+			logger.Error("backend call failed", zap.Error(err), zap.String("url", *backendURL))
+			return
+		}
 
 		logger.Debug("Sending request", zap.String("url", *backendURL))
 		res, err := client.Do(req)
