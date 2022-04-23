@@ -1,4 +1,4 @@
-version: "2"
+version: "3"
 services:
 
   # Jaeger
@@ -33,11 +33,12 @@ services:
     ports:
       - "8991:8991"
     environment:
-      - LOG_LEVEL=warn
+      - LOG_LEVEL=debug
       - BOOTSTRAP_SERVER=kafka:9092
       - CONSUMER=true
       - CONSUMER_TOPIC=topic-test
       - CONSUMER_GROUP_ID=foo
+      - PRODUCER_TOPIC=topic-test-new
       - HTTP_PORT=8991
       - OTEL_SERVICE_NAME=consumer
       - INSTRUMENTATION_NAME=consumer
@@ -47,6 +48,28 @@ services:
       - otel-collector
       - kafka
 
+  kafka-consumer-new:
+    container_name: kafka-consumer-new.local
+    build:
+      dockerfile: Dockerfile
+      context: ../../../application/confluent-demo
+    ports:
+      - "8994:8994"
+    environment:
+      - LOG_LEVEL=debug
+      - BOOTSTRAP_SERVER=kafka:9092
+      - CONSUMER=true
+      - CONSUMER_TOPIC=topic-test-new
+      - CONSUMER_GROUP_ID=foo
+      - HTTP_PORT=8994
+      - OTEL_SERVICE_NAME=consumer-new
+      - INSTRUMENTATION_NAME=consumer-new
+      - BACKEND_URL=http://http-server:8993/long
+      - OTEL_ENDPOINT=otel-collector:4317
+    depends_on:
+      - otel-collector
+      - kafka      
+
   kafka-producer:
     container_name: kafka-producer.local
     build:
@@ -55,7 +78,7 @@ services:
     ports:
       - "8992:8992"
     environment:
-      - LOG_LEVEL=debug
+      - LOG_LEVEL=warn
       - BOOTSTRAP_SERVER=kafka:9092
       - PRODUCER=true
       - PRODUCER_TOPIC=topic-test
@@ -92,7 +115,7 @@ services:
       - KAFKA_ADVERTISED_HOST_NAME=kafka
       - KAFKA_ZOOKEEPER_CONNECT=zook:2181
       - KAFKA_BROKER_ID=1
-      - KAFKA_CREATE_TOPICS="topic-test:1:1"
+      - KAFKA_CREATE_TOPICS="topic-test:1:1,topic-test-new:1:1"
       - KAFKA_ZOOKEEPER_SESSION_TIMEOUT_MS=60000
       - KAFKA_ZOOKEEPER_CONNECTION_TIMEOUT_MS=60000
     depends_on:

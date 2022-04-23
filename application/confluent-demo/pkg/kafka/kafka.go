@@ -63,7 +63,7 @@ func (srv *KafkaServer) InitKafka() chan bool {
 	consumerShutdown := make(chan bool)
 	if consumer != nil && *consumer != "" {
 		waitForConsumer = true
-		go srv.startConsumer(*bootstrapServer, *consumerGrupId, consumerTopic, consumerShutdown)
+		go srv.startConsumer(*bootstrapServer, *consumerGrupId, consumerTopic, consumerShutdown, producerTopic)
 	}
 
 	go func() {

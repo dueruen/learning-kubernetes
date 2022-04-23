@@ -16,6 +16,11 @@ exporters:
     tls:
       insecure: true
 
+  # otlp:
+  #   endpoint: tempo:4317
+  #   tls:
+  #     insecure: true  
+
 processors:
   batch:
 

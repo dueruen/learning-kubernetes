@@ -3,6 +3,7 @@ package kafka
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"math/rand"
 	"os"
 	"os/signal"
@@ -12,6 +13,9 @@ import (
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func (srv *KafkaServer) startProducer(bootstrapServer string, topic *string, producerShutdown chan bool) {
@@ -20,101 +24,24 @@ func (srv *KafkaServer) startProducer(bootstrapServer string, topic *string, pro
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 
-	p, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": bootstrapServer})
+	p, err := kafka.NewProducer(&kafka.ConfigMap{
+		"bootstrap.servers": bootstrapServer,
+		// "fetch.max.bytes":           2147483135,
+		// "receive.message.max.bytes": 2147483647,
+	})
+	// "fetch.message.max.bytes":   18000000,
+	// "receive.message.max.bytes": 2147483647,
+	// "security.protocol":         "plaintext",
+	// "sasl.mechanism":            "PLAIN",
+	// "sasl.username":             "*",
+	// "sasl.password":             "*",
+
 	if err != nil {
 		srv.logger.Sugar().Errorf("Failed to create producer: %s", err)
 		os.Exit(1)
 	}
 
 	srv.logger.Sugar().Infof("Created Producer %v\n", p)
-
-	go func() {
-		srv.logger.Sugar().Debugf("Loop events")
-		for e := range p.Events() {
-			switch ev := e.(type) {
-			case *kafka.Message:
-				if ev.TopicPartition.Error != nil {
-					srv.logger.Sugar().Errorf("Failed to deliver message: %v\n", ev.TopicPartition)
-				} else {
-					srv.logger.Sugar().Debugf("Successfully produced record to topic %s partition [%d] @ offset %v\n",
-						*ev.TopicPartition.Topic, ev.TopicPartition.Partition, ev.TopicPartition.Offset)
-				}
-
-				// mtx.Lock()
-				// if ev.TopicPartition.Metadata == nil {
-				// 	srv.logger.Warn("METADATA IS NIL")
-				// } else {
-				// 	srv.logger.Sugar().Debugf("CAN GET ID", zap.String("data", *ev.TopicPartition.Metadata))
-				// }
-
-				// for _, d := range producerMessageContexts {
-				// 	srv.logger.Sugar().Debugf("header", zap.String("some id: ", d.SpanContext().SpanID().String()))
-				// }
-				// mtx.Unlock()
-
-				// carrier := NewProducerMessageCarrier(ev)
-				// srv.logger.Sugar().Debugf("After success or failed %d", len(carrier.msg.Headers), zap.Int("header length", len(carrier.msg.Headers)))
-				// for _, f := range carrier.msg.Headers {
-				// 	srv.logger.Sugar().Debugf("header", zap.String(f.Key, string(f.Value)))
-				// 	if f.Key == "traceparent" {
-				// 		srv.logger.Sugar().Infof("HEADER HAS traceparent", zap.String("traceparent", string(f.Value)))
-				// 		// mtx.Lock()
-				// 		// if span, ok := producerMessageContexts[string(f.Value)]; ok {
-				// 		// 	srv.logger.Sugar().Infof("FOUND traceparent", zap.String("traceparent", string(f.Value)))
-				// 		// 	delete(producerMessageContexts, string(f.Value))
-				// 		// 	//finishProducerSpan(mc.span, msg.Partition, msg.Offset, nil)
-				// 		// 	//msg.Metadata = mc.metadataBackup // Restore message metadata
-				// 		// 	span.SetAttributes(
-				// 		// 		semconv.MessagingSystemKey.String("kafka"),
-				// 		// 		semconv.MessagingDestinationKindTopic,
-				// 		// 		semconv.MessagingDestinationKey.String(*ev.TopicPartition.Topic),
-				// 		// 		semconv.MessagingMessageIDKey.String(strconv.FormatInt(int64(ev.TopicPartition.Offset), 10)),
-				// 		// 		attribute.Key("messaging.kafka.partition").Int64(int64(ev.TopicPartition.Partition)),
-				// 		// 	)
-
-				// 		// 	span.End()
-				// 		// }
-				// 		// mtx.Unlock()
-				// 	}
-				// }
-
-				// carrier := NewProducerMessageCarrier(ev)
-				// ctx := otel.GetTextMapPropagator().Extract(context.Background(), carrier)
-
-				// fmt.Println(ctx)
-
-				// c := ctx.Value("b3KeyType")
-				// if c != nil {
-				// 	fmt.Println(c)
-				// }
-
-				// c = ctx.Value("b3.b3KeyType")
-				// if c != nil {
-				// 	fmt.Println(c)
-				// }
-
-				// attrs := []attribute.KeyValue{
-				// 	semconv.MessagingSystemKey.String("kafka"),
-				// 	semconv.MessagingDestinationKindTopic,
-				// 	semconv.MessagingDestinationKey.String(*ev.TopicPartition.Topic),
-				// }
-
-				// opts := []trace.SpanStartOption{
-				// 	trace.WithAttributes(attrs...),
-				// 	trace.WithSpanKind(trace.SpanKindProducer),
-				// }
-				// ctx, span := srv.tracer.Start(ctx, "kafka.produce", opts...)
-
-				// span.SetAttributes(
-				// 	semconv.MessagingMessageIDKey.String(strconv.FormatInt(int64(ev.TopicPartition.Offset), 10)),
-				// 	attribute.Key("messaging.kafka.partition").Int64(int64(ev.TopicPartition.Partition)),
-				// )
-
-				// span.End()
-			}
-		}
-		srv.logger.Sugar().Infof("Loop events OVER")
-	}()
 
 	count := 0
 	run := true
@@ -129,50 +56,67 @@ func (srv *KafkaServer) startProducer(bootstrapServer string, topic *string, pro
 		default:
 			number := rand.Intn(60)
 			time.Sleep(time.Duration(number/10) * time.Second)
-			ctx, span := srv.tracer.Start(context.Background(), "produce message")
-			//defer span.End()
 
-			recordKey := "alice"
-			data := &KafkaMessage{
-				Message: "Hello from a consumer random number: " + strconv.Itoa(number),
-				Count:   count,
-			}
-			recordValue, _ := json.Marshal(&data)
-			srv.logger.Sugar().Debugf("Preparing to produce record: %s\t%s\n", recordKey, recordValue)
+			go func(count int) {
+				ctx, spanRoot := srv.tracer.Start(context.Background(), "kafka.test")
+				//ctx, span := srv.tracer.Start(context.Background(), "produce message", trace.WithSpanKind(trace.SpanKindProducer))
+				//defer span.End()
 
-			msg := &kafka.Message{
-				TopicPartition: kafka.TopicPartition{Topic: topic, Partition: kafka.PartitionAny},
-				Key:            []byte(recordKey),
-				Value:          []byte(recordValue),
-				Headers:        []kafka.Header{{Key: "myTestHeader", Value: []byte("header values are binary")}},
-			}
+				recordKey := "alice"
+				data := &KafkaMessage{
+					Message: strconv.Itoa(number),
+					Count:   count,
+				}
+				recordValue, _ := json.Marshal(&data)
+				srv.logger.Sugar().Debugf("Preparing to produce record: %s\t%s\n", recordKey, recordValue)
 
-			otel.GetTextMapPropagator().Inject(ctx, NewProducerMessageCarrier(msg))
+				msg := &kafka.Message{
+					TopicPartition: kafka.TopicPartition{Topic: topic, Partition: kafka.PartitionAny},
+					Key:            []byte(recordKey),
+					Value:          []byte(recordValue),
+				}
 
-			//fmt.Printf("%s", *msg)
+				carrier := NewProducerMessageCarrier(msg)
+				//ctx := otel.GetTextMapPropagator().Extract(ctxRoot, carrier)
+				otel.GetTextMapPropagator().Inject(ctx, carrier)
 
-			// srv.logger.Sugar().Infof("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-			// for _, f := range msg.Headers {
-			// 	srv.logger.Sugar().Infof("key; %s - value: %s", f.Key, string(f.Value))
-			// }
+				attrs := []attribute.KeyValue{
+					semconv.MessagingSystemKey.String("kafka"),
+					semconv.MessagingDestinationKindTopic,
+					semconv.MessagingDestinationKey.String(*msg.TopicPartition.Topic),
+				}
+				opts := []trace.SpanStartOption{
+					trace.WithAttributes(attrs...),
+					trace.WithSpanKind(trace.SpanKindProducer),
+				}
+				ctx, span := srv.tracer.Start(ctx, "kafka.produce", opts...)
+				otel.GetTextMapPropagator().Inject(ctx, carrier)
 
-			// srv.logger.Sugar().Infof("spanID", zap.String("spanid", *msg.TopicPartition.Metadata))
-			//msg.TopicPartition.Metadata = &spanId
-			// mtx.Lock()
-			// // for _, f := range msg.Headers {
-			// // 	if f.Key == "traceparent" {
-			// // 		srv.logger.Sugar().Infof("Added traceparent", zap.String("traceparent", string(f.Value)))
-			// // 		producerMessageContexts[string(f.Value)] = span
-			// // 	}
-			// // }
+				deliveryChan := make(chan kafka.Event)
 
-			// mtx.Unlock()
+				p.Produce(msg, deliveryChan)
 
-			p.Produce(msg, nil)
+				e := <-deliveryChan
+				m := e.(*kafka.Message)
 
+				if m.TopicPartition.Error != nil {
+					fmt.Printf("Delivery failed: %v\n", m.TopicPartition.Error)
+				} else {
+					fmt.Printf("Delivered message to topic %s [%d] at offset %v\n",
+						*m.TopicPartition.Topic, m.TopicPartition.Partition, m.TopicPartition.Offset)
+				}
+
+				close(deliveryChan)
+
+				span.SetAttributes(
+					semconv.MessagingMessageIDKey.String(strconv.FormatInt(int64(m.TopicPartition.Offset), 10)),
+					attribute.Key("messaging.kafka.partition").Int64(int64(m.TopicPartition.Partition)),
+				)
+
+				span.End()
+				spanRoot.End()
+			}(count)
 			count++
-			span.End()
-			// run = false
 		}
 	}
 	srv.logger.Sugar().Infof("Producer down")
