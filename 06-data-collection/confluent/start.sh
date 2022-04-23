@@ -50,5 +50,5 @@ done
 
 kubectl apply -f data -n confluent
 
-kubectl apply -f kafka -n confluent
+# kubectl apply -f kafka -n confluent
 

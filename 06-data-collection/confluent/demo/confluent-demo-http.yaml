@@ -26,9 +26,9 @@ spec:
           - name: HTTP_PORT
             value: "80"                                                      
           - name: OTEL_SERVICE_NAME
-            value: "http"   
+            value: "confluent-demo-http"   
           - name: INSTRUMENTATION_NAME
-            value: "http"
+            value: "confluent-demo-http"
           - name: OTEL_ENDPOINT
             value: "otelcol-hubble-collector.kube-system.svc.cluster.local:55690"                                           
 ---

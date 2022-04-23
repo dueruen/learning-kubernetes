@@ -31,12 +31,14 @@ spec:
             value: "topic-test" 
           - name: CONSUMER_GROUP_ID
             value: "foo"    
+          - name: PRODUCER_TOPIC
+            value: "topic-test-new"              
           - name: HTTP_PORT
             value: "80"                                                      
           - name: OTEL_SERVICE_NAME
-            value: "consumer"   
+            value: "confluent-demo-consumer"   
           - name: INSTRUMENTATION_NAME
-            value: "consumer"   
+            value: "confluent-demo-consumer"   
           - name: BACKEND_URL
             value: "http://confluent-demo-http:80/long"
           - name: OTEL_ENDPOINT
