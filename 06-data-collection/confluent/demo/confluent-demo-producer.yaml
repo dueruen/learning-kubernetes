@@ -36,7 +36,7 @@ spec:
           - name: INSTRUMENTATION_NAME
             value: "confluent-demo-producer"     
           - name: OTEL_ENDPOINT
-            value: "otelcol-hubble-collector.kube-system.svc.cluster.local:55690"                                                    
+            value: "otel-collector.kube-system.svc.cluster.local:55690"                                                    
 ---
 apiVersion: v1
 kind: Service

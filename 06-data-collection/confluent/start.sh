@@ -9,8 +9,8 @@ helm repo update
 
 helm upgrade --install confluent-operator confluentinc/confluent-for-kubernetes --namespace confluent
 
-VOLUME_FOLDER=$1
-HOST_NAME=$2
+VOLUME_FOLDER=$1 # volume_ams3_03
+HOST_NAME=$2 # ubuntu-m-2vcpu-16gb-ams3-01
 
 rm -rf data
 mkdir data
