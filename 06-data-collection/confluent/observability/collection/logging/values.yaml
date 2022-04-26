@@ -304,13 +304,26 @@ config:
         K8S-Logging.Parser On
         K8S-Logging.Exclude On
 
+    [FILTER]
+        Name nest
+        Match kube.*
+        Operation lift
+        Nested_under kubernetes
+        Add_prefix   kubernetes_        
+
   ## https://docs.fluentbit.io/manual/pipeline/outputs
   outputs: |
     [OUTPUT]
         Name    forward
-        Host    otel-collector.kube-system.svc.cluster.local
+        Host    otel-collector.observability.svc.cluster.local
         Port    8006
         Match *
+
+    [OUTPUT]
+      Name stdout
+      Match *
+      Format json
+      json_date_key false        
 
   ## https://docs.fluentbit.io/manual/pipeline/parsers
   customParsers: |

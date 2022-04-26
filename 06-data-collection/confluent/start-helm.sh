@@ -1,4 +1,7 @@
 #!/bin/bash
+
+### NOT WORKING
+
 VOLUME_FOLDER=volume_ams3_02
 HOST_NAME=ubuntu-m-2vcpu-16gb-ams3-01
 

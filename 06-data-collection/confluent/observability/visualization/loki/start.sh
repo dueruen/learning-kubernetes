@@ -7,20 +7,13 @@ if [[ $# -eq 0 ]] ; then
     exit 0
 fi
 
-kubectl create namespace confluent
-
-helm repo add confluentinc https://packages.confluent.io/helm
-helm repo update
-
-helm upgrade --install confluent-operator confluentinc/confluent-for-kubernetes --namespace confluent
-
 VOLUME_FOLDER=$1 # volume_ams3_03
 HOST_NAME=$2 # ubuntu-m-2vcpu-16gb-ams3-01
 
 rm -rf data
 mkdir data
 
-for INDEX in 1 2 3
+for INDEX in 4 5
 do
 rm -rf /mnt/$VOLUME_FOLDER/data-0$INDEX
 mkdir /mnt/$VOLUME_FOLDER/data-0$INDEX
@@ -38,7 +31,6 @@ spec:
   accessModes:
   - ReadWriteOnce
   persistentVolumeReclaimPolicy: Delete
-  storageClassName: my-storage-class
   local:
      path: /mnt/$VOLUME_FOLDER/data-0$INDEX # Must be a path on the worker node
   nodeAffinity:
@@ -53,7 +45,6 @@ spec:
 EOF
 done
 
-kubectl apply -f data -n confluent
-
-# kubectl apply -f kafka -n confluent
-
+helm repo add grafana https://grafana.github.io/helm-charts
+helm repo update
+helm upgrade --install vis --namespace=loki grafana/loki-simple-scalable
