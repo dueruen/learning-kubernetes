@@ -2,12 +2,12 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ template "observability-stack.fullname" . }}
+  name: observ-stack
   namespace: {{ .Release.Namespace }}
   labels:
-    app: {{ template "observability-stack.name" . }}
-    chart: {{ template "observability-stack.chart" . }}
-    release: {{ .Release.Name }}
+    app: observ-stack
+    chart: observ-stack.chart
+    # release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
     grafana_datasource: "1"
 data:
@@ -18,7 +18,7 @@ data:
     - name: Loki
       type: loki
       access: proxy
-      url: http://{{(include "loki.serviceName" .)}}:{{ .Values.loki.service.port }}
+      url: http://observ-loki:{{ .Values.loki.service.port }}
       version: 1
       isDefault: {{ .Values.loki.isDefault }}
       jsonData:
@@ -28,7 +28,7 @@ data:
     - name: Prometheus
       type: prometheus
       access: proxy
-      url: http://{{ include "prometheus.fullname" .}}:{{ .Values.prometheus.server.service.servicePort }}{{ .Values.prometheus.server.prefixURL }}
+      url: http://observ-prometheus-server:{{ .Values.prometheus.server.service.servicePort }}{{ .Values.prometheus.server.prefixURL }}
       version: 1
       isDefault: {{ .Values.prometheus.isDefault }}
 {{- end }}
@@ -36,7 +36,7 @@ data:
     - name: Tempo
       type: tempo
       access: proxy
-      url: http://{{(include "tempo.serviceName" .)}}:{{ .Values.tempo.server.http_listen_port }}
+      url: http://observ-tempo:{{ .Values.tempo.server.http_listen_port }}
       version: 1
       isDefault: {{ .Values.tempo.isDefault }}
 {{- end }}

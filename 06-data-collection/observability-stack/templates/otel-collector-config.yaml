@@ -8,7 +8,7 @@ metadata:
 data:
   config.yaml: |-
     receivers:
-{{- if .Values.fluent-bit.enabled }}       
+{{- if .Values.fluentbit.enabled }}     
       fluentforward:
         endpoint: 0.0.0.0:8006
 {{- end }}        
@@ -51,7 +51,7 @@ data:
 {{- end }}          
 {{- if .Values.tempo.enabled }}          
       otlp/tempo:
-        endpoint: tempo:4317
+        endpoint: observ-tempo:4317
         tls:
           insecure: true     
 {{- end }}               
@@ -68,7 +68,7 @@ data:
           processors: [batch]          
           exporters: [logging]
 {{- end }}
-{{- if .Values.fluent-bit.enabled }}                   
+{{- if .Values.fluentbit.enabled }}                  
         logs:
           receivers: [fluentforward]
           processors: [batch]

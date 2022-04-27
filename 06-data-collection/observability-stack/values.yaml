@@ -2,8 +2,11 @@ loki:
   enabled: true
   isDefault: true
 
+  service:
+    port: 3100
+
 grafana:
-  enabled: false
+  enabled: true
   sidecar:
     datasources:
       enabled: true
@@ -14,6 +17,9 @@ grafana:
 prometheus:
   enabled: true
   isDefault: false
+
+  service:
+    servicePort: 80
 
   kubeStateMetrics:
     enabled: true
@@ -42,6 +48,12 @@ prometheus:
 tempo:
   enabled: true
   isDefault: false
+
+  server:
+    http_listen_port: 3100
+
+fluentbit:
+  enabled: true
 
 fluent-bit:
   enabled: true

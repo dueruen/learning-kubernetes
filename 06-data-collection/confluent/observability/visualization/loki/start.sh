@@ -13,7 +13,7 @@ HOST_NAME=$2 # ubuntu-m-2vcpu-16gb-ams3-01
 rm -rf data
 mkdir data
 
-for INDEX in 4 5
+for INDEX in 4 5 6
 do
 rm -rf /mnt/$VOLUME_FOLDER/data-0$INDEX
 mkdir /mnt/$VOLUME_FOLDER/data-0$INDEX
