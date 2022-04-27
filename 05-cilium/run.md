@@ -18,6 +18,8 @@ kubectl -n jaeger port-forward svc/jaeger-default-query 8082:16686 --address='0.
 
 kubectl port-forward svc/my-kube-state-metrics 8083:8080 --address='0.0.0.0'
 
+kubectl port-forward svc/loki-grafana 3000:80 --address='0.0.0.0'
+
 kubectl create -f l7-policy.yaml
 kubectl apply -f producer-low-access.yaml
 kubectl apply -f producer.yaml

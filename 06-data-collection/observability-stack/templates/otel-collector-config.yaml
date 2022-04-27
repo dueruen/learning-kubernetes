@@ -1,13 +1,18 @@
+{{- if .Values.otel.enabled }}    
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: otel-collector-config
+  namespace: {{ .Release.Namespace }}
 data:
   config.yaml: |-
     receivers:
+{{- if .Values.fluent-bit.enabled }}       
       fluentforward:
         endpoint: 0.0.0.0:8006
+{{- end }}        
+{{- if .Values.prometheus.kubeStateMetrics.enabled }}          
       prometheus:
         config:
           scrape_configs:
@@ -15,6 +20,7 @@ data:
               scrape_interval: 5s
               static_configs:
                 - targets: ["observ-kube-state-metrics.observability.svc.cluster.local:8080"]
+{{- end }}                 
       otlp:
         protocols:
           grpc:
@@ -24,6 +30,11 @@ data:
         timeout: 30s
         send_batch_size: 100 
     exporters:
+      # prometheusremotewrite:
+      #   endpoint: "http://<endpoint>"
+      #   tls:
+      #     insecure: true    
+{{- if .Values.loki.enabled }}    
       loki:
         endpoint: http://observ-loki-headless:3100/loki/api/v1/push
         labels:
@@ -31,23 +42,39 @@ data:
             kubernetes_namespace_name: "kubernetes_namespace_name"
             kubernetes_pod_name: "kubernetes_pod_name"
             kubernetes_host: "kubernetes_host"
+{{- end }}             
+{{- if .Values.jaeger.enabled }}             
       jaeger:
-        endpoint: jaeger-default-collector.observability.svc.cluster.local:14250
+        endpoint: jaeger-default-collector.{{ .Release.Namespace }}.svc.cluster.local:14250
         tls:
           insecure: true
+{{- end }}          
+{{- if .Values.tempo.enabled }}          
+      otlp/tempo:
+        endpoint: tempo:4317
+        tls:
+          insecure: true     
+{{- end }}               
       logging:
     service:
       pipelines:
         traces:
           receivers: [otlp]
           processors: [batch]
-          exporters: [jaeger, logging]
+          exporters: [{{- if .Values.jaeger.enabled }} jaeger,{{- end }} {{- if .Values.tempo.enabled }} otlp/tempo,{{- end }} logging]
+{{- if .Values.prometheus.kubeStateMetrics.enabled }}           
         metrics:
           receivers: [prometheus]
           processors: [batch]          
-          exporters: [logging]      
+          exporters: [logging]
+{{- end }}
+{{- if .Values.fluent-bit.enabled }}                   
         logs:
           receivers: [fluentforward]
           processors: [batch]
-          exporters: [loki, logging]
+{{- if .Values.loki.enabled }}          
+          exporters: [loki]
+{{- end }}          
+{{- end }}          
 ---
+{{- end }}  

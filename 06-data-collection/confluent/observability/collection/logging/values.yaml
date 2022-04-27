@@ -288,11 +288,11 @@ config:
         Mem_Buf_Limit 5MB
         Skip_Long_Lines On
 
-    [INPUT]
-        Name systemd
-        Tag host.*
-        Systemd_Filter _SYSTEMD_UNIT=kubelet.service
-        Read_From_Tail On
+   ## [INPUT]
+    ##    Name systemd
+    ##    Tag host.*
+   ##     Systemd_Filter _SYSTEMD_UNIT=kubelet.service
+   ##     Read_From_Tail On
 
   ## https://docs.fluentbit.io/manual/pipeline/filters
   filters: |
@@ -317,13 +317,13 @@ config:
         Name    forward
         Host    otel-collector.observability.svc.cluster.local
         Port    8006
-        Match *
+        Match   kube.*
 
     [OUTPUT]
-      Name stdout
-      Match *
-      Format json
-      json_date_key false        
+        Name stdout
+        Match kube.*
+        Format json
+        json_date_key false        
 
   ## https://docs.fluentbit.io/manual/pipeline/parsers
   customParsers: |

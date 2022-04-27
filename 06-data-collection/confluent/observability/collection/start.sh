@@ -16,4 +16,3 @@ helm install -f ./logging/values.yaml fluent-bit fluent/fluent-bit --namespace o
 echo "Start kube-state metrics"
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm install kube-state-metrics prometheus-community/kube-state-metrics --version 4.7.0 --namespace observability
-

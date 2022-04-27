@@ -45,6 +45,21 @@ spec:
 EOF
 done
 
+kubectl apply -f data
+
 helm repo add grafana https://grafana.github.io/helm-charts
 helm repo update
-helm upgrade --install vis --namespace=loki grafana/loki-simple-scalable
+helm upgrade -f ./values.yaml --install loki --namespace=observability grafana/loki-simple-scalable
+
+(
+  kubectl wait deployment --namespace="observability" --for="condition=Available" loki-loki-simple-scalable-gateway --timeout=3m
+  kubectl wait pods --namespace="observability" --for="condition=Ready" --all --timeout=3m
+)
+
+
+
+# helm upgrade --install observ grafana/loki-stack --namespace observability --set grafana.enabled=true,prometheus.enabled=true,prometheus.alertmanager.persistentVolume.enabled=false,prometheus.server.persistentVolume.enabled=false,promtail.enabled=false
+
+# kubectl get secret --namespace observability loki-grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
+
+# helm install tempo grafana/tempo --namespace observability
