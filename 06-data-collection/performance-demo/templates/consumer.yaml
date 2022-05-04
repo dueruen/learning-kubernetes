@@ -1,0 +1,62 @@
+{{- $top := . -}}
+{{- range $app := .Values.apps -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: consumer
+  labels:
+    app: consumer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: consumer
+  template:
+    metadata:
+      labels:
+        app: consumer
+        accessLevel: high
+    spec:
+      containers:
+      - name: consumer
+        image: "dueruen/learning-kubernetes:performance-demo-amd64"
+        imagePullPolicy: "Always"
+        ports:
+          - name: http
+            containerPort: 80
+        env:
+          - name: BOOTSTRAP_SERVER
+            value: {{ .Values.bootstrapServer }} 
+          - name: TOPIC
+            value: "topic" 
+          - name: OTEL_ENDPOINT
+            value: {{ .Values.otelEndpoint }}  
+          - name: SERVICE_NAME
+            value: "consumer"             
+          - name: INSTRUMENT
+            value: {{ .Values.instrument }}                                                                  
+          - name: OTEL_SERVICE_NAME
+            value: "consumer"   
+          - name: CONSUMER_WORK_TIME
+            value: {{ .Values.consumer.workTime }} 
+          - name: CONSUMER_RANDOM_ERROR
+            value: {{ .Values.consumer.randomError }}                
+          - name: APP_NAME
+            value: "consumer"                                         
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: consumer
+  labels:
+    app: consumer
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      
+  selector:
+    app: consumer
+{{ end }}    

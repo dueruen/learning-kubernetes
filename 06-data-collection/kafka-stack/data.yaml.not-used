@@ -1,3 +1,5 @@
+#There are problems with the order things are crated. PVC are created before PV
+
 # See for configuration: https://docs.confluent.io/operator/2.0.0/co-storage.html#use-statically-provisioned-persistent-volumes
 {{- $top := . -}}
 {{- range $pv := .Values.pv -}}
@@ -5,17 +7,17 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: data-{{ $pvc }}
+  name: data-{{ $pv }}
 spec:
   capacity:
     storage: 10Gi
   volumeMode: Filesystem
   accessModes:
   - ReadWriteOnce
-  persistentVolumeReclaimPolicy: Delete
+  persistentVolumeReclaimPolicy: Recycle
   storageClassName: my-storage-class
-  local:
-     path: {{ .Values.path }} # Must be a path on the worker node
+  local: # Global scope is lost when using range, but can be used using $
+     path: {{ $.Values.path }} # Must be a path on the worker node
   nodeAffinity:
     required:
       nodeSelectorTerms:
@@ -23,6 +25,6 @@ spec:
         - key: kubernetes.io/hostname
           operator: In
           values:
-          - {{ .Values.host }}
+          - {{ $.Values.host }}
 ---
 {{ end }}

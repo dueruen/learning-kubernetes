@@ -34,6 +34,14 @@ func IsInstrumented() bool {
 	return strings.ToLower(*instrument) == "true"
 }
 
+func IsWithWorkTime() bool {
+	return strings.ToLower(*withConsumerWorkTime) == "true"
+}
+
+func IsWithRandomError() bool {
+	return strings.ToLower(*withConsumerRandomError) == "true"
+}
+
 func main() {
 	flag.Parse()
 

@@ -102,12 +102,12 @@ func printMessage(msg *sarama.ConsumerMessage) {
 			fmt.Println("traceId: ", span.SpanContext().TraceID())
 		}
 
-		if *withConsumerWorkTime != "" {
+		if IsWithWorkTime() {
 			// Emulate Work loads
 			time.Sleep(1 * time.Second)
 		}
 
-		if *withConsumerRandomError != "" {
+		if IsWithRandomError() {
 			randNum := rand.Intn(100)
 			if randNum < 7 {
 				time.Sleep(3 * time.Second)

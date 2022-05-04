@@ -1,0 +1,62 @@
+{{- $top := . -}}
+{{- range $app := .Values.apps -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: producer
+  labels:
+    app: producer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: producer
+  template:
+    metadata:
+      labels:
+        app: producer
+        accessLevel: high
+    spec:
+      containers:
+      - name: producer
+        image: "dueruen/learning-kubernetes:performance-demo-amd64"
+        imagePullPolicy: "Always"
+        ports:
+          - name: http
+            containerPort: 80
+        env:
+          - name: BOOTSTRAP_SERVER
+            value: {{ .Values.bootstrapServer }}
+          - name: TOPIC
+            value: "topic" 
+          - name: OTEL_ENDPOINT
+            value: {{ .Values.otelEndpoint }}  
+          - name: SERVICE_NAME
+            value: "producer"             
+          - name: INSTRUMENT
+            value: {{ .Values.instrument }}                                                                  
+          - name: OTEL_SERVICE_NAME
+            value: "producer"   
+          - name: MESSAGE_SIZE
+            value: {{ .Values.consumer.messageSize }} 
+          - name: MESSAGE_FREQUENCY
+            value: {{ .Values.consumer.messageFrequency }}                
+          - name: APP_NAME
+            value: "producer"                                                                
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: producer
+  labels:
+    app: producer
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      
+  selector:
+    app: producer
+{{ end }}    

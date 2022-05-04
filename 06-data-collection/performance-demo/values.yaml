@@ -1,0 +1,10 @@
+instrument: "false"
+bootstrapServer: "kafka.confluent.svc.cluster.local:9092"
+
+consumer:
+  workTime: "false"
+  randomError: "false"
+
+producer:
+  messageSize: "100"
+  messageFrequency: "10"
