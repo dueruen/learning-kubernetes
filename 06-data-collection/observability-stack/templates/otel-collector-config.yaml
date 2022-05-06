@@ -17,7 +17,7 @@ data:
         config:
           scrape_configs:
             - job_name: "kube-state-metrics"
-              scrape_interval: 5s
+              scrape_interval: {{ .Values.otel.scrape_interval }}
               static_configs:
                 - targets: ["observ-kube-state-metrics.observability.svc.cluster.local:8080"]
 {{- end }}                 
@@ -30,6 +30,8 @@ data:
         timeout: 30s
         send_batch_size: 100 
     exporters:
+      file:
+        path: ./data.json    
       # prometheusremotewrite:
       #   endpoint: "http://<endpoint>"
       #   tls:
@@ -68,13 +70,11 @@ data:
           processors: [batch]          
           exporters: [logging]
 {{- end }}
-{{- if .Values.fluentbit.enabled }}                  
+{{- if .Values.fluentbit.enabled }}
         logs:
           receivers: [fluentforward]
           processors: [batch]
-{{- if .Values.loki.enabled }}          
-          exporters: [loki]
-{{- end }}          
-{{- end }}          
+          exporters: [{{- if .Values.loki.enabled }}loki, {{- end }} file]
+{{- end }}         
 ---
 {{- end }}  

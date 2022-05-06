@@ -24,26 +24,33 @@ prometheus:
   kubeStateMetrics:
     enabled: true
 
+  nodeExporter:
+    enabled: false
+
+  pushgateway:
+    enabled: false
+
   alertmanager:
     enabled: false
 
   server:
+    enabled: false
     persistentVolume:
       enabled: false
 
-  serverFiles:
-    prometheus.yml:
-      scrape_configs:
-        - job_name: 'prometheus-pushgateway'
-          honor_labels: true
+  # serverFiles:
+  #   prometheus.yml:
+  #     scrape_configs:
+  #       - job_name: 'prometheus-pushgateway'
+  #         honor_labels: true
 
-          kubernetes_sd_configs:
-            - role: service
+  #         kubernetes_sd_configs:
+  #           - role: service
 
-          relabel_configs:
-            - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_probe]
-              action: keep
-              regex: pushgateway  
+  #         relabel_configs:
+  #           - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_probe]
+  #             action: keep
+  #             regex: pushgateway  
 
 tempo:
   enabled: true
@@ -92,6 +99,8 @@ fluent-bit:
 
 otel:
   enabled: true
+
+  scrape_interval: "15s"
 
 jaeger:
   enabled: false

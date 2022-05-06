@@ -1,10 +1,15 @@
-instrument: "false"
+app_instrument: "enable" # con for some reason not but true or false or yes or no
+
 bootstrapServer: "kafka.confluent.svc.cluster.local:9092"
 
+otelEndpoint: "otel-collector.observability.svc.cluster.local:55690"
+
+debug: "enable"
+
 consumer:
-  workTime: "false"
-  randomError: "false"
+  workTime: "disable"
+  randomError: "disable"
 
 producer:
-  messageSize: "100"
-  messageFrequency: "10"
+  messageSize: 100
+  messageFrequency: 10

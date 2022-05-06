@@ -6,11 +6,14 @@ HOST_NAME=ubuntu-m-2vcpu-16gb-ams3-01 #
 rm -rf data
 mkdir data
 
-for INDEX in 1 2 3
+for INDEX in 0
 do
 rm -rf /mnt/$VOLUME_FOLDER/data-0$INDEX
 mkdir /mnt/$VOLUME_FOLDER/data-0$INDEX
 chmod 777 /mnt/$VOLUME_FOLDER/data-0$INDEX
+echo "" > /mnt/$VOLUME_FOLDER/data-0$INDEX/data.json
+chmod 777 /mnt/$VOLUME_FOLDER/data-0$INDEX/data.json
+
 cat > data/data-0$INDEX.yaml << EOF
 ---
 apiVersion: v1

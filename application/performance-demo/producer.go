@@ -36,11 +36,14 @@ func StartProducer(brokerList []string, kafkaTopic string) chan bool {
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
+	fmt.Println("messageSizeInt: ", messageSizeInt)
+
 	messageFrequency, err := strconv.Atoi(*messageFrequency)
 	if err != nil {
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
+	fmt.Println("messageFrequency: ", messageFrequency)
 
 	var tr trace.Tracer
 	if IsInstrumented() {
@@ -68,6 +71,9 @@ func StartProducer(brokerList []string, kafkaTopic string) chan bool {
 	}()
 
 	go func() {
+		if IsInDebug() {
+			log.Println("Ready to start producer")
+		}
 		producer := newAccessLogProducer(brokerList)
 
 		sigchan := make(chan os.Signal, 1)
@@ -91,6 +97,7 @@ func StartProducer(brokerList []string, kafkaTopic string) chan bool {
 					}
 					t := time.Now().UnixNano()
 					fmt.Println(t, "producer.produce", "app=", appName, "id=", performanceTrace)
+
 					var ctx context.Context
 					var span trace.Span
 					if IsInstrumented() {
@@ -122,8 +129,10 @@ func StartProducer(brokerList []string, kafkaTopic string) chan bool {
 					// fmt.Println("Message size: ", size)
 
 					producer.Input() <- &msg
-					_ = <-producer.Successes()
-					// log.Println("Successful to write message, offset:", successMsg.Offset)
+					successMsg := <-producer.Successes()
+					if IsInDebug() {
+						log.Println("Successful to write message, offset:", successMsg.Offset)
+					}
 				}()
 			}
 		}
@@ -167,6 +176,9 @@ func newAccessLogProducer(brokerList []string) sarama.AsyncProducer {
 		}
 	}()
 
+	if IsInDebug() {
+		log.Println("Producer created")
+	}
 	return producer
 }
 

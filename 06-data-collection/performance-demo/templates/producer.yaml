@@ -1,5 +1,3 @@
-{{- $top := . -}}
-{{- range $app := .Values.apps -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -24,25 +22,31 @@ spec:
         ports:
           - name: http
             containerPort: 80
+        args:
+          - "-message-size=100 -message-frequency=10"             
         env:
-          - name: BOOTSTRAP_SERVER
+          - name: KAFKA_BROKERS
             value: {{ .Values.bootstrapServer }}
           - name: TOPIC
-            value: "topic" 
+            value: "topic"
           - name: OTEL_ENDPOINT
-            value: {{ .Values.otelEndpoint }}  
+            value: {{ .Values.otelEndpoint }}
           - name: SERVICE_NAME
-            value: "producer"             
-          - name: INSTRUMENT
-            value: {{ .Values.instrument }}                                                                  
+            value: "producer"
+          - name: APP_INSTRUMENT
+            value: {{ .Values.app_instrument }}
           - name: OTEL_SERVICE_NAME
-            value: "producer"   
+            value: "producer"
           - name: MESSAGE_SIZE
-            value: {{ .Values.consumer.messageSize }} 
+            value: "{{ .Values.producer.messageSize }}"
           - name: MESSAGE_FREQUENCY
-            value: {{ .Values.consumer.messageFrequency }}                
+            value: "{{ .Values.producer.messageFrequency }}"
           - name: APP_NAME
-            value: "producer"                                                                
+            value: "producer"
+          - name: DEBUG
+            value: {{ .Values.debug }}
+          - name: PRODUCER
+            value: "enable"                                                                                   
 ---
 apiVersion: v1
 kind: Service
@@ -59,4 +63,3 @@ spec:
       
   selector:
     app: producer
-{{ end }}    
