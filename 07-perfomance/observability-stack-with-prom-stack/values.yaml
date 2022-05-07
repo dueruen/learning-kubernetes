@@ -10,52 +10,52 @@ loki:
   service:
     port: 3100
 
-grafana:
-  enabled: true
+kube-prometheus-stack:
+  grafana:
+    enabled: true
 
-  additionalDataSources:
-  - name: Loki
-    type: loki
-    access: proxy
-    url: http://observ-loki-headless.observability.svc.cluster.local:3100
-    version: 1
-  - name: Tempo
-    type: tempo
-    access: proxy
-    url: http://observ-tempo.observability.svc.cluster.local:3100
-    version: 1    
+    additionalDataSources:
+    - name: Loki
+      type: loki
+      access: proxy
+      url: http://observ-loki-headless.observability.svc.cluster.local:3100
+      version: 1
+    - name: Tempo
+      type: tempo
+      access: proxy
+      url: http://observ-tempo.observability.svc.cluster.local:3100
+      version: 1    
 
 
-prometheus:
-  prometheusSpec:
-    additionalScrapeConfigs:
-    - job_name: 'kubernetes-pods'
-      scrape_interval: 30s
-      kubernetes_sd_configs:
-      - role: pod
-      relabel_configs:
-        - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
-          action: keep
-          regex: true
-        - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
-          action: replace
-          regex: (.+):(?:\d+);(\d+)
-          replacement: ${1}:${2}
-          target_label: __address__
-    - job_name: 'kubernetes-endpoints'
-      scrape_interval: 30s
-      kubernetes_sd_configs:
-        - role: endpoints
-      relabel_configs:
-        - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
-          action: keep
-          regex: true
-        - source_labels: [__address__, __meta_kubernetes_service_annotation_prometheus_io_port]
-          action: replace
-          target_label: __address__
-          regex: (.+)(?::\d+);(\d+)
-          replacement: $1:$2          
-
+  prometheus:
+    prometheusSpec:
+      additionalScrapeConfigs:
+      - job_name: 'kubernetes-pods'
+        scrape_interval: 30s
+        kubernetes_sd_configs:
+        - role: pod
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+            action: keep
+            regex: true
+          - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+            action: replace
+            regex: (.+):(?:\d+);(\d+)
+            replacement: ${1}:${2}
+            target_label: __address__
+      - job_name: 'kubernetes-endpoints'
+        scrape_interval: 30s
+        kubernetes_sd_configs:
+          - role: endpoints
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
+            action: keep
+            regex: true
+          - source_labels: [__address__, __meta_kubernetes_service_annotation_prometheus_io_port]
+            action: replace
+            target_label: __address__
+            regex: (.+)(?::\d+);(\d+)
+            replacement: $1:$2          
 tempo:
   enabled: true
   isDefault: false

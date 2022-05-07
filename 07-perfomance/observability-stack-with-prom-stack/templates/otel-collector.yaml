@@ -40,9 +40,9 @@ spec:
           name: data
           subPath: config.yaml
           readOnly: true
-        - mountPath: /data.json
+        - mountPath: /data-{{ .Values.run_name }}.json
           name: task-pv-storage  
-          subPath: data.json      
+          subPath: data-{{ .Values.run_name }}.json      
       terminationGracePeriodSeconds: 30
       volumes:
       - name: varlog

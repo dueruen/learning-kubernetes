@@ -11,4 +11,4 @@ helm upgrade --install confluent-operator confluentinc/confluent-for-kubernetes 
 echo "Sleep 15s"
 sleep 15s
 
-helm install confluent-kafka . --namespace confluent
+helm install confluent-kafka . --namespace confluent -f values.yaml
