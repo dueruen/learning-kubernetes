@@ -20,6 +20,8 @@ kubectl port-forward svc/my-kube-state-metrics 8083:8080 --address='0.0.0.0'
 
 kubectl port-forward svc/loki-grafana 3000:80 --address='0.0.0.0'
 
+kubectl port-forward svc/observ-prometheus-node-exporter 3000:9100 --address='0.0.0.0' -n observability
+
 kubectl create -f l7-policy.yaml
 kubectl apply -f producer-low-access.yaml
 kubectl apply -f producer.yaml
