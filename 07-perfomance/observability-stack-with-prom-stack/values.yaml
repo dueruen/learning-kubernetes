@@ -1,0 +1,110 @@
+run_name: first
+
+cilium:
+  policies: true
+
+loki:
+  enabled: true
+  isDefault: true
+
+  service:
+    port: 3100
+
+grafana:
+  enabled: true
+
+  additionalDataSources:
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://observ-loki-headless.observability.svc.cluster.local:3100
+    version: 1
+  - name: Tempo
+    type: tempo
+    access: proxy
+    url: http://observ-tempo.observability.svc.cluster.local:3100
+    version: 1    
+
+
+prometheus:
+  prometheusSpec:
+    additionalScrapeConfigs:
+    - job_name: 'kubernetes-pods'
+      scrape_interval: 30s
+      kubernetes_sd_configs:
+      - role: pod
+      relabel_configs:
+        - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+          action: keep
+          regex: true
+        - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+          action: replace
+          regex: (.+):(?:\d+);(\d+)
+          replacement: ${1}:${2}
+          target_label: __address__
+    - job_name: 'kubernetes-endpoints'
+      scrape_interval: 30s
+      kubernetes_sd_configs:
+        - role: endpoints
+      relabel_configs:
+        - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
+          action: keep
+          regex: true
+        - source_labels: [__address__, __meta_kubernetes_service_annotation_prometheus_io_port]
+          action: replace
+          target_label: __address__
+          regex: (.+)(?::\d+);(\d+)
+          replacement: $1:$2          
+
+tempo:
+  enabled: true
+  isDefault: false
+
+  server:
+    http_listen_port: 3100
+
+fluentbit:
+  enabled: true
+
+fluent-bit:
+  enabled: true
+  config:
+    inputs: |
+      [INPUT]
+          Name tail
+          Path /var/log/containers/*.log
+          multiline.parser docker, cri
+          Tag kube.*
+          Mem_Buf_Limit 5MB
+          Skip_Long_Lines On
+
+    filters: |
+      [FILTER]
+          Name kubernetes
+          Match kube.*
+          Merge_Log On
+          Keep_Log Off
+          K8S-Logging.Parser On
+          K8S-Logging.Exclude On
+
+      [FILTER]
+          Name nest
+          Match kube.*
+          Operation lift
+          Nested_under kubernetes
+          Add_prefix   kubernetes_ 
+
+    outputs: |
+      [OUTPUT]
+          Name    forward
+          Host    otel-collector.observability.svc.cluster.local
+          Port    8006
+          Match   kube.*                   
+
+otel:
+  enabled: true
+
+  scrape_interval: "15s"
+
+jaeger:
+  enabled: false

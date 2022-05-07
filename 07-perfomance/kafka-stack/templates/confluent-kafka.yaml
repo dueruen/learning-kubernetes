@@ -3,9 +3,14 @@ apiVersion: platform.confluent.io/v1beta1
 kind: Kafka
 metadata:
   name: kafka
+  labels:
+    app: kafka  
   namespace: confluent
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      app: kafka  
   image:
     application: confluentinc/cp-server:7.0.1
     init: confluentinc/confluent-init-container:2.2.1

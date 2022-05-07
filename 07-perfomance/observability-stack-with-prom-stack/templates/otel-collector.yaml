@@ -1,0 +1,79 @@
+# https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/examples/kubernetes
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: otel-collector
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: opentelemetry
+    component: otel-collector
+spec:
+  selector:
+    matchLabels:
+      app: opentelemetry
+      component: otel-collector
+  template:
+    metadata:
+      labels:
+        app: opentelemetry
+        component: otel-collector
+    spec:
+      containers:
+      - name: otel-collector
+        image: otel/opentelemetry-collector-contrib:0.49.0
+        resources:
+          limits:
+            cpu: 200m
+            memory: 400Mi
+          requests:
+            cpu: 100m
+            memory: 200Mi
+        volumeMounts:
+        - mountPath: /var/log
+          name: varlog
+          readOnly: true
+        - mountPath: /var/lib/docker/containers
+          name: varlibdockercontainers
+          readOnly: true
+        - mountPath: /etc/otelcol-contrib/config.yaml
+          name: data
+          subPath: config.yaml
+          readOnly: true
+        - mountPath: /data.json
+          name: task-pv-storage  
+          subPath: data.json      
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: varlog
+        hostPath:
+          path: /var/log
+      - name: varlibdockercontainers
+        hostPath:
+          path: /var/lib/docker/containers
+      - name: data
+        configMap:
+          name: otel-collector-config
+      - name: task-pv-storage
+        persistentVolumeClaim:
+          claimName: task-pv-claim      
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: otel-collector
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: opentelemetry
+    component: otel-collector
+spec:
+  ports:
+  - name: metrics # Default endpoint for querying metrics.
+    port: 8888
+  - name: fluent
+    port: 8006
+  - name: otel-grpc
+    port: 55690          
+  selector:
+    component: otel-collector

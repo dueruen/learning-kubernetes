@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: producer
+  name: producer-{{ .Values.run_name }}
   labels:
     app: producer
 spec:
@@ -21,9 +21,7 @@ spec:
         imagePullPolicy: "Always"
         ports:
           - name: http
-            containerPort: 80
-        args:
-          - "-message-size=100 -message-frequency=10"             
+            containerPort: 80          
         env:
           - name: KAFKA_BROKERS
             value: {{ .Values.bootstrapServer }}

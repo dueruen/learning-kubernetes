@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: consumer
+  name: consumer-{{ .Values.run_name }}
   labels:
     app: consumer
 spec:
