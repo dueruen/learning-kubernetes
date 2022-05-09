@@ -12,7 +12,7 @@ else
   ./create_data.sh $VOLUME_FOLDER $HOST_NAME $RUN_NAME
 fi
 
-helm dependency build
+helm dependency update
 
 helm upgrade --install observ . \
   --create-namespace --namespace observability \

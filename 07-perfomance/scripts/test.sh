@@ -2,6 +2,13 @@
 
 . ./run.config
 
+# echo "Round started - it will take $ROUND_RUN_TIME m"
+# for i in $(seq 1 $ROUND_RUN_TIME) 
+# do
+#    sleep 1s
+#    echo "$i m ..."
+# done
+
 count=0
 MESSAGE_SIZE_OFFSET=0
 MESSAGE_FREQUENCY_OFFSET=0

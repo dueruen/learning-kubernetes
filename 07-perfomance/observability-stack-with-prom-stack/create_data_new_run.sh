@@ -8,5 +8,4 @@ do
 echo "" > /mnt/$VOLUME_FOLDER/data-0$INDEX/data-$RUN_NAME.json
 chmod 777 /mnt/$VOLUME_FOLDER/data-0$INDEX/data-$RUN_NAME.json
 
-EOF
 done

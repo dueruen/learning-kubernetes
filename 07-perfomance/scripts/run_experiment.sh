@@ -42,7 +42,7 @@ echo "Message frequency: " $mf
 
 if [ $count -eq 0 ]
 then
-   cd ../../observability-stack-with-prom-stack
+   cd ../observability-stack-with-prom-stack
    ./start.sh $VOLUME_FOLDER $HOST_NAME $value false
 
    cd ../kafka-stack
@@ -64,7 +64,7 @@ cd ../performance-demo
 ./start.sh $value $ms $mf
 
 echo "Round started - it will take $ROUND_RUN_TIME m"
-for i in {1..$ROUND_RUN_TIME}
+for i in $(seq 1 $ROUND_RUN_TIME) 
 do
    sleep 1m
    echo "$i m ..."
