@@ -1,7 +1,10 @@
 #!/bin/bash
+VOLUME_FOLDER=$1
+HOST_NAME=$2
+
 kubectl create namespace confluent
 
-. create_data.sh
+./create_data.sh VOLUME_FOLDER HOST_NAME
 
 helm repo add confluentinc https://packages.confluent.io/helm
 helm repo update

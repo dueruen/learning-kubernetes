@@ -1,11 +1,8 @@
 #!/bin/bash
 
-VOLUME_FOLDER=volume_ams3_01 # volume_ams3_03
-HOST_NAME=ubuntu-m-2vcpu-16gb-ams3-01 #
-RUN_NAME=$1 
-
-rm -rf data
-mkdir data
+VOLUME_FOLDER=$1
+HOST_NAME=$2
+RUN_NAME=$3
 
 for INDEX in 0
 do
@@ -23,7 +20,7 @@ metadata:
   name: data-0$INDEX
 spec:
   capacity:
-    storage: 20Gi
+    storage: 30Gi
   volumeMode: Filesystem
   accessModes:
   - ReadWriteOnce

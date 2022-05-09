@@ -1,10 +1,7 @@
 #!/bin/bash
 
-VOLUME_FOLDER=volume_ams3_01 # volume_ams3_03
-HOST_NAME=ubuntu-m-2vcpu-16gb-ams3-01 # 
-
-rm -rf data
-mkdir data
+VOLUME_FOLDER=$1
+HOST_NAME=$2
 
 for INDEX in 1 2 3
 do

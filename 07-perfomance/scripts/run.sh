@@ -1,6 +1,7 @@
 #!/bin/bash
 
-RUN_NAME="first"
+rm -rf /mnt/$VOLUME_FOLDER
+mkdir /mnt/$VOLUME_FOLDER
 
 helm upgrade cilium cilium/cilium --version 1.11.2 \
    --namespace kube-system \
@@ -16,10 +17,10 @@ echo "Wait for Cilium to upgrade Sleep 30sec"
 sleep 30s
 
 cd ./observability-stack-with-prom-stack
-./start.sh $RUN_NAME
+./start.sh $VOLUME_FOLDER $HOST_NAME $RUN_NAME
 
 cd ../kafka-stack
-./start.sh
+./start.sh $VOLUME_FOLDER $HOST_NAME
 
 echo "Wait for kafka to start Sleep 4m"
 sleep 1m
