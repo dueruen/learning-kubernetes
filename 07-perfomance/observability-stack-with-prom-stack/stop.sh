@@ -2,4 +2,4 @@
 
 helm uninstall observ . --namespace observability
 
-kubectl delete -f /data
+kubectl delete -f data

@@ -4,6 +4,9 @@ VOLUME_FOLDER=$1
 HOST_NAME=$2
 RUN_NAME=$3
 
+rm -rf ./data
+mkdir ./data
+
 for INDEX in 0
 do
 rm -rf /mnt/$VOLUME_FOLDER/data-0$INDEX

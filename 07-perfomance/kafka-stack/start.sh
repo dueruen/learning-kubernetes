@@ -2,6 +2,9 @@
 VOLUME_FOLDER=$1
 HOST_NAME=$2
 
+rm -rf /data
+mkdir /data
+
 kubectl create namespace confluent
 
 ./create_data.sh VOLUME_FOLDER HOST_NAME
