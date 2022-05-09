@@ -1,3 +1,3 @@
 #!/bin/bash
 
-helm uninstall performance-test . --namespace performance
+helm uninstall performance-test --namespace performance

@@ -63,7 +63,7 @@ fi
 cd ../performance-demo
 ./start.sh $value $ms $mf
 
-echo "Round started - it will take $ROUND_RUN_TIME m"
+echo "Round started - it will take $ROUND_RUN_TIME m - $value - ms $ms - mf $mf"
 for i in $(seq 1 $ROUND_RUN_TIME) 
 do
    sleep 1m
