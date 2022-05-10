@@ -126,8 +126,8 @@ func printMessage(msg *sarama.ConsumerMessage) {
 			}
 		}
 
-		t := time.Now().UnixNano()
-		fmt.Println(t, "consumer.consumed", "app=", appName, "id=", traceId)
+		t := time.Now().UnixMicro()
+		fmt.Println(t, "consumer.consume", "app=", *appName, "id=", traceId)
 	}()
 }
 

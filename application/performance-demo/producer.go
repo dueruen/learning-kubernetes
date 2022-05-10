@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/Shopify/sarama"
-	"github.com/google/uuid"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/Shopify/sarama/otelsarama"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
@@ -28,6 +27,10 @@ func StartProducer(brokerList []string, kafkaTopic string) chan bool {
 		os.Exit(1)
 	}
 	if *messageFrequency == "" {
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
+	if *producerRunTime == "" {
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
@@ -45,36 +48,59 @@ func StartProducer(brokerList []string, kafkaTopic string) chan bool {
 	}
 	fmt.Println("messageFrequency: ", messageFrequency)
 
+	producerRunTime, err := strconv.Atoi(*producerRunTime)
+	if err != nil {
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
+	fmt.Println("producerRunTime: ", producerRunTime)
+
 	var tr trace.Tracer
 	if IsInstrumented() {
 		tr = otel.Tracer("producer")
 	}
 
-	rand.Seed(time.Now().Unix())
+	rand.Seed(42)
 
-	frequencyInNano := 1000000000 / messageFrequency
-	produceSignal := make(chan bool, 10)
-	go func() {
-		sigchan := make(chan os.Signal, 1)
-		signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
+	produceSignal := make(chan string, 10)
+	producesigchan := make(chan os.Signal, 1)
+	signal.Notify(producesigchan, syscall.SIGINT, syscall.SIGTERM)
 
-		run := true
-		for run {
-			select {
-			case _ = <-sigchan:
-				run = false
-			default:
-				produceSignal <- true
-				time.Sleep(time.Duration(frequencyInNano) * time.Nanosecond)
+	// create kafka client
+	producer := newAccessLogProducer(brokerList)
+
+	stopProducerChan := make(chan bool)
+	var timerStop []chan bool
+
+	waitTime := 10000 / messageFrequency
+	for i := 0; i < 10; i++ {
+		stop := make(chan bool)
+		timerStop = append(timerStop, stop)
+		go func(index int) {
+			ticker := time.NewTicker(time.Duration(waitTime) * time.Millisecond)
+
+			var count int64 = 0
+			run := true
+			for run {
+				select {
+				case _ = <-stop:
+					ticker.Stop()
+					run = false
+					close(stop)
+				case _ = <-ticker.C:
+					count++
+					time.Sleep(time.Duration(rand.Intn((waitTime * 100000))) * time.Nanosecond)
+					produceSignal <- "" //fmt.Sprintf("%d-%d", index, s.UnixMicro())
+				}
 			}
-		}
-	}()
+		}(i)
+	}
 
+	count := 0
 	go func() {
 		if IsInDebug() {
 			log.Println("Ready to start producer")
 		}
-		producer := newAccessLogProducer(brokerList)
 
 		sigchan := make(chan os.Signal, 1)
 		signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
@@ -86,17 +112,19 @@ func StartProducer(brokerList []string, kafkaTopic string) chan bool {
 				producer.Close()
 				run = false
 				shutdown <- true
+			case _ = <-stopProducerChan:
+				fmt.Println("Producer have stopped scheduling new messages. Total scheduled messages is: ", count)
 			case _ = <-produceSignal:
+				count++
 				go func() {
-					performanceTrace := uuid.New()
-
+					//id := roundId //.Nanosecond()
 					randBytes := RandASCIIBytes(messageSizeInt)
 
 					if len(sigchan) > 3 {
 						fmt.Println("!!!!!!!!!!!!!! Producer cannot produce fast enough !!!!!!!!!!!!!")
 					}
-					t := time.Now().UnixNano()
-					fmt.Println(t, "producer.produce", "app=", appName, "id=", performanceTrace)
+					t := time.Now().UnixMicro()
+					fmt.Println(t, "producer.produce", "app=", *appName, "id=", count)
 
 					var ctx context.Context
 					var span trace.Span
@@ -118,7 +146,7 @@ func StartProducer(brokerList []string, kafkaTopic string) chan bool {
 						Key:   sarama.StringEncoder(keyValue),
 						Value: sarama.ByteEncoder(randBytes),
 						Headers: []sarama.RecordHeader{
-							{Key: []byte("id"), Value: []byte(performanceTrace.String())}},
+							{Key: []byte("id"), Value: []byte(fmt.Sprintf("%d", count))}},
 					}
 
 					if IsInstrumented() {
@@ -135,6 +163,15 @@ func StartProducer(brokerList []string, kafkaTopic string) chan bool {
 					}
 				}()
 			}
+		}
+	}()
+
+	go func() {
+		time.Sleep((time.Duration((15*1000)+5) * time.Millisecond) + time.Duration(waitTime*100000)*time.Nanosecond)
+		// ticker.Stop()
+		stopProducerChan <- true
+		for _, c := range timerStop {
+			c <- true
 		}
 	}()
 

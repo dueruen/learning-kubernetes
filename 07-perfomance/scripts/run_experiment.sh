@@ -61,7 +61,7 @@ else
 fi
 
 cd ../performance-demo
-./start.sh $value $ms $mf
+./start.sh $value $ms $mf $PRODUCER_RUN_TIME
 
 echo "Round started - it will take $ROUND_RUN_TIME m - $value - ms $ms - mf $mf"
 for i in $(seq 1 $ROUND_RUN_TIME) 
@@ -86,3 +86,5 @@ echo ""
 done
 
 echo "All done - but resources is not deleted"
+echo "Stopping performance-test apps"
+./stop.sh

@@ -3,6 +3,7 @@
 RUN_NAME=$1
 MESSAGE_SIZES=$2
 MESSAGE_FREQUENCY=$3
+PRODUCER_RUNTIME=$4
 
 if [[ -z "${MESSAGE_SIZES}" ]]; then
   echo "Using default message size"
@@ -14,5 +15,6 @@ else
     -f values.yaml \
     --set run_name=$RUN_NAME \
     --set producer.messageSize=$MESSAGE_SIZES \
-    --set producer.messageFrequency=$MESSAGE_FREQUENCY
+    --set producer.messageFrequency=$MESSAGE_FREQUENCY \
+    --set producer.runTime=$PRODUCER_RUNTIME
 fi

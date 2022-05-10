@@ -58,9 +58,10 @@ services:
       - PRODUCER=true
       - SERVICE_NAME=producer
       - INSTRUMENT=true
-      - MESSAGE_SIZE=100
-      - MESSAGE_FREQUENCY=10
+      - MESSAGE_SIZE=320
+      - MESSAGE_FREQUENCY=1000
       - APP_NAME=producer
+      - PRODUCER_RUNTIME=1
     depends_on:
       - otel-collector
       - kafka  

@@ -13,5 +13,6 @@ consumer:
   randomError: "disable"
 
 producer:
+  runTime: 30
   messageSize: 100
   messageFrequency: 10

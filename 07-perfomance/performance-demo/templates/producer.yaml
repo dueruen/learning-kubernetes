@@ -44,7 +44,9 @@ spec:
           - name: DEBUG
             value: {{ .Values.debug }}
           - name: PRODUCER
-            value: "enable"                                                                                   
+            value: "enable"        
+          - name: PRODUCER_RUNTIME
+            value: "{{ .Values.producer.runTime }}"                                                                                     
 ---
 apiVersion: v1
 kind: Service

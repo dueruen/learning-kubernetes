@@ -25,11 +25,12 @@ var (
 	serviceName             = flag.String("service-name", os.Getenv("SERVICE_NAME"), "SERVICE_NAME")
 	instrument              = flag.String("app-instrument", os.Getenv("APP_INSTRUMENT"), "APP_INSTRUMENT")
 	messageSize             = flag.String("message-size", os.Getenv("MESSAGE_SIZE"), "MESSAGE_SIZE")
-	messageFrequency        = flag.String("message-frequency", os.Getenv("MESSAGE_FREQUENCY"), "MESSAGE_FREQUENCY")
+	messageFrequency        = flag.String("message-frequency", os.Getenv("MESSAGE_FREQUENCY"), "MESSAGE_FREQUENCY - Has to be 10, 100 or 1000")
 	withConsumerWorkTime    = flag.String("consumer-work-time", os.Getenv("CONSUMER_WORK_TIME"), "CONSUMER_WORK_TIME")
 	withConsumerRandomError = flag.String("consumer-random-error", os.Getenv("CONSUMER_RANDOM_ERROR"), "CONSUMER_RANDOM_ERROR")
 	appName                 = flag.String("app-name", os.Getenv("APP_NAME"), "APP_NAME")
 	debug                   = flag.String("debug", os.Getenv("DEBUG"), "DEBUG")
+	producerRunTime         = flag.String("producer-runtime", os.Getenv("PRODUCER_RUNTIME"), "PRODUCER_RUNTIME - Must be a int that represent minutes")
 )
 
 func IsInstrumented() bool {
