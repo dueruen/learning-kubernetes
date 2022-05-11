@@ -88,3 +88,7 @@ done
 echo "All done - but resources is not deleted"
 echo "Stopping performance-test apps"
 ./stop.sh
+
+echo "Starting log data conversion"
+cd ../scripts
+./convert.sh

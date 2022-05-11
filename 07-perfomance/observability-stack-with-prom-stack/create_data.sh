@@ -23,7 +23,7 @@ metadata:
   name: data-0$INDEX
 spec:
   capacity:
-    storage: 30Gi
+    storage: 40Gi
   volumeMode: Filesystem
   accessModes:
   - ReadWriteOnce

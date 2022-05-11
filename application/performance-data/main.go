@@ -18,7 +18,7 @@ import (
 
 // github.com/open-telemetry/opentelemetry-collector/blob/main/pdata/plog
 
-var valuesMap map[string][]int64
+var valuesMap map[int][]int64
 
 var (
 	inputPath     = flag.String("inputpath", os.Getenv("INPUT_PATH"), "INPUT_PATH")
@@ -59,7 +59,7 @@ func main() {
 		}
 	}
 
-	valuesMap = make(map[string][]int64)
+	valuesMap = make(map[int][]int64)
 
 	file, err := os.Open(*inputPath + "/" + *fileName + *fileExtension)
 	if err != nil {
@@ -115,10 +115,10 @@ func writeFile() {
 	_, _ = datawriter.WriteString(strings.Join(headers, ",") + "\n")
 
 	keys := maps.Keys(valuesMap)
-	sort.Strings(keys)
+	sort.Ints(keys)
 
 	for _, key := range keys {
-		vals := []string{key}
+		vals := []string{fmt.Sprint(key)}
 		vals = append(vals, strings.Fields(strings.Trim(fmt.Sprint(valuesMap[key]), "[]"))...)
 		_, _ = datawriter.WriteString(strings.Join(vals, ",") + "\n")
 	}
@@ -154,11 +154,15 @@ func readLine(jsonBuf []byte) {
 					if err != nil {
 						fmt.Println("ERROR: ", err)
 					}
+					id, err := strconv.Atoi(words[5])
+					if err != nil {
+						continue
+					}
 
-					if len(valuesMap[words[5]]) == 0 {
-						valuesMap[words[5]] = []int64{-1, intVar, -1}
+					if len(valuesMap[id]) == 0 {
+						valuesMap[id] = []int64{-1, intVar, -1}
 					} else {
-						valuesMap[words[5]] = []int64{valuesMap[words[5]][0], intVar, intVar - valuesMap[words[5]][0]}
+						valuesMap[id] = []int64{valuesMap[id][0], intVar, intVar - valuesMap[id][0]}
 					}
 
 				} else if strings.Contains(val, "producer.produce") {
@@ -168,11 +172,15 @@ func readLine(jsonBuf []byte) {
 					if err != nil {
 						fmt.Println("ERROR: ", err)
 					}
+					id, err := strconv.Atoi(words[5])
+					if err != nil {
+						continue
+					}
 
-					if len(valuesMap[words[5]]) == 0 {
-						valuesMap[words[5]] = []int64{intVar, -1, -1}
+					if len(valuesMap[id]) == 0 {
+						valuesMap[id] = []int64{intVar, -1, -1}
 					} else {
-						valuesMap[words[5]] = []int64{intVar, valuesMap[words[5]][1], valuesMap[words[5]][1] - intVar}
+						valuesMap[id] = []int64{intVar, valuesMap[id][1], valuesMap[id][1] - intVar}
 					}
 				}
 

@@ -167,7 +167,7 @@ func StartProducer(brokerList []string, kafkaTopic string) chan bool {
 	}()
 
 	go func() {
-		time.Sleep((time.Duration((15*1000)+5) * time.Millisecond) + time.Duration(waitTime*100000)*time.Nanosecond)
+		time.Sleep((time.Duration(producerRunTime) * time.Minute) + time.Duration(waitTime*100000)*time.Nanosecond)
 		// ticker.Stop()
 		stopProducerChan <- true
 		for _, c := range timerStop {
