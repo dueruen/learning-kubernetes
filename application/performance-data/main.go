@@ -148,7 +148,7 @@ func readLine(jsonBuf []byte) {
 			for i := 0; i < scopeLog.LogRecords().Len(); i++ {
 				logRecord := scopeLog.LogRecords().At(i)
 				val := logRecord.Body().AsString()
-				if strings.Contains(val, "consumer.consumed") {
+				if strings.Contains(val, "consumer.consume") {
 					words := strings.Fields(val)
 					intVar, err := strconv.ParseInt(words[0], 10, 64)
 					if err != nil {
