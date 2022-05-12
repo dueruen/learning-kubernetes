@@ -10,6 +10,9 @@ loki:
   service:
     port: 3100
 
+prometheus:
+  enabled: true
+
 kube-prometheus-stack:
   grafana:
     enabled: true

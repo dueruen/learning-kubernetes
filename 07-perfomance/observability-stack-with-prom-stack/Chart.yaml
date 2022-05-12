@@ -33,6 +33,7 @@ dependencies:
   repository: "https://fluent.github.io/helm-charts"
   version: "0.19.24"
 - name: "kube-prometheus-stack"
+  condition: prometheus.enabled
   version: "35.0.3"
   repository:  "https://prometheus-community.github.io/helm-charts"
 - name: "tempo"
