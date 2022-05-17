@@ -6,12 +6,8 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"sort"
-	"strconv"
 	"strings"
 	"time"
-
-	"golang.org/x/exp/maps"
 
 	"go.opentelemetry.io/collector/pdata/plog"
 )
@@ -59,7 +55,7 @@ func main() {
 		}
 	}
 
-	valuesMap = make(map[int][]int64)
+	// valuesMap = make(map[int][]int64)
 
 	file, err := os.Open(*inputPath + "/" + *fileName + *fileExtension)
 	if err != nil {
@@ -75,6 +71,23 @@ func main() {
 	scanner.Buffer(buf, maxCapacity)
 	// count := 30
 	// var wg sync.WaitGroup
+
+	writeFile("producer", "id", "time")
+	writeFile("consumer", "id", "time")
+
+	runtime := 5
+	go func() {
+		fmt.Println("Conversion starting of file", *fileName)
+		out := time.Tick(time.Duration(5) * time.Second)
+		for {
+			select {
+			case _ = <-out:
+				fmt.Println("Running:: ", runtime, "s")
+				runtime += 5
+			}
+
+		}
+	}()
 
 	for scanner.Scan() {
 		// wg.Add(1)
@@ -92,35 +105,28 @@ func main() {
 	elapsed := time.Since(start)
 	log.Printf("Took %s", elapsed)
 
-	fmt.Println("Writing to file")
-	writeFile()
-	fmt.Println("Writing to file Done")
+	// fmt.Println("Writing to file")
+	// writeFile()
+	// fmt.Println("Writing to file Done")
 
 	// makePlots()
 
-	elapsed = time.Since(start)
-	log.Printf("Took %s", elapsed)
+	// elapsed = time.Since(start)
+	// log.Printf("Took %s", elapsed)
 }
 
-func writeFile() {
-	file, err := os.OpenFile(*outputPath+"/"+*fileName+".csv", os.O_CREATE|os.O_WRONLY, 0644)
+func writeFile(typeName string, id string, time string) {
+	file, err := os.OpenFile(*outputPath+"/"+*fileName+"-"+typeName+".csv", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
 
 	if err != nil {
 		log.Fatalf("failed creating file: %s", err)
 	}
 
 	datawriter := bufio.NewWriter(file)
+	_, err = datawriter.WriteString(id + "," + time + "\n")
 
-	headers := []string{"id", "produce", "consume", "diff"}
-	_, _ = datawriter.WriteString(strings.Join(headers, ",") + "\n")
-
-	keys := maps.Keys(valuesMap)
-	sort.Ints(keys)
-
-	for _, key := range keys {
-		vals := []string{fmt.Sprint(key)}
-		vals = append(vals, strings.Fields(strings.Trim(fmt.Sprint(valuesMap[key]), "[]"))...)
-		_, _ = datawriter.WriteString(strings.Join(vals, ",") + "\n")
+	if err != nil {
+		log.Println("Failed to write to file: ", err)
 	}
 
 	datawriter.Flush()
@@ -134,7 +140,7 @@ func readLine(jsonBuf []byte) {
 	check(err)
 
 	// fmt.Println(got.LogRecordCount())
-	fmt.Println("Count: ", got.ResourceLogs().Len())
+	// fmt.Println("Count: ", got.ResourceLogs().Len())
 
 	// // var ss plog.internal.ResourceLogsSlice
 	// // var s = got.ResourceLogs()
@@ -150,38 +156,36 @@ func readLine(jsonBuf []byte) {
 				val := logRecord.Body().AsString()
 				if strings.Contains(val, "consumer.consume") {
 					words := strings.Fields(val)
-					intVar, err := strconv.ParseInt(words[0], 10, 64)
-					if err != nil {
-						fmt.Println("ERROR: ", err)
-					}
-					id, err := strconv.Atoi(words[5])
-					if err != nil {
-						continue
-					}
 
-					if len(valuesMap[id]) == 0 {
-						valuesMap[id] = []int64{-1, intVar, -1}
-					} else {
-						valuesMap[id] = []int64{valuesMap[id][0], intVar, intVar - valuesMap[id][0]}
-					}
+					// intVar, err := strconv.ParseInt(words[0], 10, 64)
+					// if err != nil {
+					// 	fmt.Println("ERROR: ", err)
+					// }
+					writeFile("consumer", words[5], words[0])
+					// if len(valuesMap[id]) == 0 {
+					// 	valuesMap[id] = []int64{-1, intVar, -1}
+					// } else {
+					// 	valuesMap[id] = []int64{valuesMap[id][0], intVar, intVar - valuesMap[id][0]}
+					// }
 
 				} else if strings.Contains(val, "producer.produce") {
 					words := strings.Fields(val)
+					writeFile("producer", words[5], words[0])
 
-					intVar, err := strconv.ParseInt(words[0], 10, 64)
-					if err != nil {
-						fmt.Println("ERROR: ", err)
-					}
-					id, err := strconv.Atoi(words[5])
-					if err != nil {
-						continue
-					}
+					// intVar, err := strconv.ParseInt(words[0], 10, 64)
+					// if err != nil {
+					// 	fmt.Println("ERROR: ", err)
+					// }
+					// id, err := strconv.Atoi(words[5])
+					// if err != nil {
+					// 	continue
+					// }
 
-					if len(valuesMap[id]) == 0 {
-						valuesMap[id] = []int64{intVar, -1, -1}
-					} else {
-						valuesMap[id] = []int64{intVar, valuesMap[id][1], valuesMap[id][1] - intVar}
-					}
+					// if len(valuesMap[id]) == 0 {
+					// 	valuesMap[id] = []int64{intVar, -1, -1}
+					// } else {
+					// 	valuesMap[id] = []int64{intVar, valuesMap[id][1], valuesMap[id][1] - intVar}
+					// }
 				}
 
 			}

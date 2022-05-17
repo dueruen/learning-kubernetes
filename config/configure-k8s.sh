@@ -16,7 +16,7 @@ tar -zxvf helm-v3.8.2-linux-amd64.tar.gz
 mv linux-amd64/helm /usr/local/bin/helm
 rm helm-v3.8.2-linux-amd64.tar.gz
 
-echo "Install DNI"
+echo "Install CNI"
 helm repo add cilium https://helm.cilium.io/
 
 helm install cilium cilium/cilium --version 1.11.4 \
