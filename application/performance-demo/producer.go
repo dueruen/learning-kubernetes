@@ -96,8 +96,8 @@ func StartProducer(brokerList []string, kafkaTopic string) chan bool {
 		}(i)
 	}
 
-	count := 0
 	go func() {
+		count := 0
 		if IsInDebug() {
 			log.Println("Ready to start producer")
 		}
@@ -116,7 +116,7 @@ func StartProducer(brokerList []string, kafkaTopic string) chan bool {
 				fmt.Println("Producer have stopped scheduling new messages. Total scheduled messages is: ", count)
 			case _ = <-produceSignal:
 				count++
-				go func() {
+				go func(id int) {
 					//id := roundId //.Nanosecond()
 					randBytes := RandASCIIBytes(messageSizeInt)
 
@@ -124,7 +124,7 @@ func StartProducer(brokerList []string, kafkaTopic string) chan bool {
 						fmt.Println("!!!!!!!!!!!!!! Producer cannot produce fast enough !!!!!!!!!!!!!")
 					}
 					t := time.Now().UnixMicro()
-					fmt.Println(t, "producer.produce", "app=", *appName, "id=", count)
+					fmt.Println(t, "producer.produce", "app=", *appName, "id=", id)
 
 					var ctx context.Context
 					var span trace.Span
@@ -146,7 +146,7 @@ func StartProducer(brokerList []string, kafkaTopic string) chan bool {
 						Key:   sarama.StringEncoder(keyValue),
 						Value: sarama.ByteEncoder(randBytes),
 						Headers: []sarama.RecordHeader{
-							{Key: []byte("id"), Value: []byte(fmt.Sprintf("%d", count))}},
+							{Key: []byte("id"), Value: []byte(fmt.Sprintf("%d", id))}},
 					}
 
 					if IsInstrumented() {
@@ -161,7 +161,7 @@ func StartProducer(brokerList []string, kafkaTopic string) chan bool {
 					if IsInDebug() {
 						log.Println("Successful to write message, offset:", successMsg.Offset)
 					}
-				}()
+				}(count)
 			}
 		}
 	}()
