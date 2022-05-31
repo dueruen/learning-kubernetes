@@ -1,81 +1,41 @@
-# import csv
-# import matplotlib.pyplot as plt
-# import numpy as np
-
-
-
-# from pandas import read_csv
-# from matplotlib import pyplot
-# cols = list(read_csv('../data/metrics/all-wfnc-Memory.csv', nrows =1))
-# series = read_csv('../data/metrics/all-wfnc-Memory.csv', header=0, index_col=0, parse_dates=True, squeeze=True, usecols =[i for i in cols if i != 'max capacity'])
-# series.plot.area()
-# pyplot.legend(bbox_to_anchor=(1.0, 1.0))
-# pyplot.savefig('test.png')
-
 from pandas import read_csv
-from pandas import DataFrame
-from matplotlib import pyplot
-cols = list(read_csv('../data/nopromwac/data-nopromwacmfozmstt.csv', nrows =1))
-print(cols)
-series = read_csv('../data/nopromwac/data-nopromwacmfozmstt.csv', header=0, index_col=0, parse_dates=True, squeeze=True, usecols =[i for i in cols if i == 'diff'])
-# series = series[series['diff'] != -1]
-series.drop(series.index[series['diff'] != -1], inplace=True)
-print(series)
-s = DataFrame(
-  {
-    "diff": series.index
-  },
-  columns=["diff"]
-)
-pyplot.figure()
-s.plot.hist(stacked=True, bins=20)
-# pyplot.legend(bbox_to_anchor=(1.0, 1.0))
-pyplot.savefig('test-hist.png')
+from pathlib import Path
+import matplotlib.pyplot as plt
+from os import path
+import numpy as np
 
-# plotTilte = 'Empty minikube cluster with istio memory use in MB'
-# plotYLabel = 'Memory use (MB)'
-# fileName = 'all-nowac-CPU'
+Path("resources/").mkdir(parents=True, exist_ok=True)
+names = ["wac", "niwac", "wfnc"]
+unit = ["cpu", "memory"]
+unitTitle = ["CPU / [cpu units]", "Memory / [GB]"]
+titleText = ["With instrumentation", "Without instrumentation", "With flannel instead of Cilium"]
+# frequencies = ["mfoz", "mfozz", "mfozzz"]
 
-# startPath = '../data/metrics/' + fileName
-# #hostNames = ['master-01', 'worker-01', 'worker-02']
-# hostNames = ['']
-# fileExtension = '.csv'
+unitCount = 0
+for unitName in unit:
+  count = 0
+  for name in names:
+    print(name + " - " + unitName + " - " + titleText[count])
+    filePath = '../data/fixed/' + name + '/metric/' + name +'-' + unitName + '.csv'
 
-# data = []
-# headers = []
+    if (path.exists(filePath) == False):
+      print("Has no metrics matching path")
+      continue
 
-# for hostName in hostNames:
-#   with open(startPath + hostName + fileExtension) as csv_file:
-#       csv_reader = csv.reader(csv_file, delimiter=',')
-#       line_count = 0
-#       maxDiff = 0
-#       for row in csv_reader:
-#           if line_count == 0:
-#               print(f'Column names are {", ".join(row)}')
-#               line_count += 1
-#               headers = row
-#               for h in headers:
-#                 data.append([])
-#           else:
-#             for index, d in enumerate(row):
-#               data[index].append(d)
+    cols = list(read_csv(filePath, nrows =1))
+    series = read_csv(filePath, header=0, index_col=0, parse_dates=True, squeeze=True, usecols =[i for i in cols if i != 'max capacity']) #and ('consumer-wacmfozmstt-' in i or i == "Time")
+    if unitName == 'memory':
+      series = series.apply(lambda x: x / (10**9))
+    
+    plt.rcParams["figure.figsize"] = (20,15)
 
-#             line_count += 1
+    series.plot.area(cmap=plt.get_cmap('tab20c'))
 
-#   # plot
-#   # fig, ax = plt.subplots()
+    plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+    plt.xlabel("Time / [clock]")
+    plt.ylabel(unitTitle[unitCount])
+    plt.title(titleText[count] + " " + unitName + " usage")
+    plt.savefig('resources/' + name + '-' + unitName + '-recources.pdf', bbox_inches='tight')
 
-# for index, da in enumerate(data):
-#   if index == 0 or index == 1:
-#     continue
-
-#   plt.plot(data[0], data[index], linewidth=2.0)
-
-#   # ax.set(xlim=(0, len(diff)),
-#   # ylim=(0, maxDiff))
-
-# plt.xlabel('Histogram of process time')
-# plt.ylabel(plotYLabel)
-# plt.title(plotTilte)
-
-# plt.savefig(fileName + '.png')
+    count = count + 1
+  unitCount = unitCount + 1
